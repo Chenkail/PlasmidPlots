@@ -37,9 +37,9 @@ def url_input():
     return url_list
 
 def strain_name_scrape(url):
-    '''
+    """
     Scrapes NCBI for name of a strain given its url
-    '''
+    """
     
     import urllib
     from bs4 import BeautifulSoup
@@ -627,7 +627,7 @@ def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns):
 
 
 def strain_sort(data_dict):
-    '''Returns a dictionary where the keys are the strains and the values are plasmid dictionaries'''
+    """Returns a dictionary where the keys are the strains and the values are plasmid dictionaries"""
     
     # Separate plasmids into groups
     strain_dict = {}
@@ -700,7 +700,7 @@ def pil_grid(images, columns):
 
 
 def generate_legend(color_dict, font_size, file_name):
-    '''Creates a legend given a dictionary of colors and names'''
+    """Creates a legend given a dictionary of colors and names"""
     
     # Import libraries
     import copy
@@ -855,7 +855,7 @@ def main():
     
     # Print total run time after input
     program_end = timer()
-    time = TIMER_FORMAT%(end_time - start_time)
+    time = TIMER_FORMAT%(program_end - program_start)
     print("Program run complete." + TIME_STRING%time)
 
 

@@ -274,6 +274,115 @@ def read_colors(file):
     return color_dict, subgroup_dict
 
 
+def pil_grid(images, columns):
+    """Takes an array of images and a column count, and generates a grid using the images"""
+    
+    # Import libraries
+    from PIL import Image
+    import numpy as np
+    
+    # Count the images and set row/column count
+    image_count = len(images)
+    
+    # If the number of images is less than the number of columns,
+    # set the number of columns to the number of images
+    column_count = min(image_count, columns)
+    
+    # Set row count
+    rows = image_count // column_count
+    if image_count % column_count != 0:
+        rows += 1
+    
+    # Create arrays of 0s
+    left_x, top_y = [0] * column_count, [0] * rows
+    
+    # Calculate max image width and height for each row/column
+    for index, image in enumerate(images):
+        horizontal_index, vertical_index = index % column_count, index // column_count
+        left_x[horizontal_index] = max(left_x[horizontal_index], image.size[0])
+        top_y[vertical_index] = max(top_y[vertical_index], image.size[1])
+    
+    # Set column width and row height for each row/column
+    left_x, top_y = np.cumsum([0] + left_x), np.cumsum([0] + top_y)
+    
+    # Create blank image
+    image_grid = Image.new('RGB', (left_x[-1], top_y[-1]), color='white')
+    
+    # Add images to grid
+    for index, image in enumerate(images):
+        column = index % column_count
+        row = index // column_count # Note: Max height for last row is irrelevant because there is unlimited space below
+        
+        if columns == 1:
+            x_offset = 0
+        else:
+            x_offset = (left_x[column + 1] - left_x[column])/2 - image.size[0]/2
+        
+        x = left_x[column] + x_offset
+        y_offset = (top_y[row + 1] - top_y[row])/2 - image.size[1]/2
+        if y_offset < 0:
+            y_offset = 0
+        y = top_y[row] + y_offset
+        
+        x = int(x)
+        y = int(y)
+        image_grid.paste(image, (x, y))
+    
+    return image_grid
+
+
+def generate_legend(color_dict, font_size, file_name='legend.png'):
+    """Creates a legend given a dictionary of colors and names"""
+    
+    # Import libraries
+    import copy
+    import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
+    
+    # Remove base color from legend
+    legend_colors = copy.deepcopy(color_dict)
+    legend_colors.pop('Base Color')
+    
+    # Create list of patches with colors and names
+    patch_list = []
+    for label, color in sorted(legend_colors.items()):
+        # Create patch and add to list
+        legend_key = mpatches.Patch(label=label, color=color)
+        patch_list.append(legend_key)
+    
+    # Plot and save to image
+    plt.legend(fontsize=font_size, handles=patch_list)
+    plt.axis('off')
+    plt.savefig(file_name, bbox_inches='tight')
+    plt.close('all')
+
+
+def append_legend(image, legend_image, legend_size=(300, 300), legend_location='bottom right'):
+    """Adds legend to an image"""
+    
+    from PIL import Image
+    
+    # Get dimensions of plot image
+    old_image = Image.open(image)
+    plot_width, plot_height = old_image.size
+    
+    # Resize legend
+    legend = Image.open(legend_image)
+    legend.thumbnail(legend_size)
+    legend_width, legend_height = legend.size
+    
+    legend_x = plot_width - legend_width
+    legend_y = plot_height
+    
+    # New image
+    new_image = Image.new('RGB', (plot_width, plot_height + legend_height), (255, 255, 255))
+    new_image.paste(old_image, (0, 0))
+    old_image.close()
+    new_image.paste(legend, (legend_x, legend_y), legend)
+    legend.close()
+    new_image.save(image)
+
+
 def linear_plot(plasmid, data, sequence_color_dict):
     """Plots a linear plasmid given the plasmid name and data list"""
     
@@ -579,7 +688,7 @@ def file_to_dict(filename, dna_input, replen, subgroup_dict):
     return data_dict
 
 
-def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns):
+def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns, legend='legend.png'):
     """Loops over every key in dictionary and creates a plot for each, then generates images"""
     
     # Import libraries
@@ -603,14 +712,17 @@ def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns):
             linear_plot_list.append(image)
     
     circular_plots = pil_grid(circular_plot_list, circular_plot_columns)
-    circular_plot_file_name = strain + "_circular_plots.png"
-    circular_plots.save(circular_plot_file_name)
+    circular_plot_file = strain + "_circular_plots.png"
+    circular_plots.save(circular_plot_file)
     circular_plots.close()
     
     linear_plots = pil_grid(linear_plot_list, 1)
-    linear_plot_file_name = strain + "_linear_plots.png"
-    linear_plots.save(linear_plot_file_name)
+    linear_plot_file = strain + "_linear_plots.png"
+    linear_plots.save(linear_plot_file)
     linear_plots.close()
+    
+    append_legend(circular_plot_file, legend)
+    append_legend(linear_plot_file, legend)
     
     # Clean up temporary files
     temp_files = [temp_file,]
@@ -634,89 +746,6 @@ def strain_sort(data_dict):
         strain_dict[strain][plasmid] = data
     
     return strain_dict
-
-
-def pil_grid(images, columns):
-    """Takes an array of images and a column count, and generates a grid using the images"""
-    
-    # Import libraries
-    from PIL import Image
-    import numpy as np
-    
-    # Count the images and set row/column count
-    image_count = len(images)
-    
-    # If the number of images is less than the number of columns,
-    # set the number of columns to the number of images
-    column_count = min(image_count, columns)
-    
-    # Set row count
-    rows = image_count // column_count
-    if image_count % column_count != 0:
-        rows += 1
-    
-    # Create arrays of 0s
-    left_x, top_y = [0] * column_count, [0] * rows
-    
-    # Calculate max image width and height for each row/column
-    for index, image in enumerate(images):
-        horizontal_index, vertical_index = index % column_count, index // column_count
-        left_x[horizontal_index] = max(left_x[horizontal_index], image.size[0])
-        top_y[vertical_index] = max(top_y[vertical_index], image.size[1])
-    
-    # Set column width and row height for each row/column
-    left_x, top_y = np.cumsum([0] + left_x), np.cumsum([0] + top_y)
-    
-    # Create blank image
-    image_grid = Image.new('RGB', (left_x[-1], top_y[-1]), color='white')
-    
-    # Add images to grid
-    for index, image in enumerate(images):
-        column = index % column_count
-        row = index // column_count # Note: Max height for last row is irrelevant because there is unlimited space below
-        
-        if columns == 1:
-            x_offset = 0
-        else:
-            x_offset = (left_x[column + 1] - left_x[column])/2 - image.size[0]/2
-        
-        x = left_x[column] + x_offset
-        y_offset = (top_y[row + 1] - top_y[row])/2 - image.size[1]/2
-        if y_offset < 0:
-            y_offset = 0
-        y = top_y[row] + y_offset
-        
-        x = int(x)
-        y = int(y)
-        image_grid.paste(image, (x, y))
-    
-    return image_grid
-
-
-def generate_legend(color_dict, font_size, file_name):
-    """Creates a legend given a dictionary of colors and names"""
-    
-    # Import libraries
-    import copy
-    import matplotlib.patches as mpatches
-    import matplotlib.pyplot as plt
-    
-    # Remove base color from legend
-    legend_colors = copy.deepcopy(color_dict)
-    legend_colors.pop('Base Color')
-    
-    # Create list of patches with colors and names
-    patch_list = []
-    for label, color in sorted(legend_colors.items()):
-        # Create patch and add to list
-        legend_key = mpatches.Patch(label=label, color=color)
-        patch_list.append(legend_key)
-    
-    # Plot and save to image
-    plt.legend(fontsize=font_size, handles=patch_list)
-    plt.axis('off')
-    plt.savefig(file_name, bbox_inches='tight')
-    plt.close('all')
 
 
 # -------- End functions -------- #

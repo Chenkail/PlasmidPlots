@@ -279,12 +279,8 @@ def linear_plot(plasmid, data, sequence_color_dict):
     
     # Import libraries
     import matplotlib.pyplot as plt
-    import numpy as np
     
     # Set constants
-    BASE_LINE_WIDTH = 15
-    SEQUENCE_LINE_WIDTH = 20
-    MARKER_LINE_WIDTH = 15
     HORIZONTAL_SCALE_CONSTANT = 1/4000
     # Offsets to avoid labels intersecting plot
     LABEL_Y_ADJUST = 0.1
@@ -379,7 +375,6 @@ def circular_plot(plasmid, data, sequence_color_dict):
     sequence_name = plasmid
     plasmid_length = data[0]
     data_count = len(data)
-    label_radius = 7
     
     # Sizing
     graph_scale = np.sqrt(plasmid_length/9000) * CIRCULAR_SCALE_CONSTANT
@@ -477,7 +472,7 @@ def subgroup_search(sequence, family, subgroup_dict):
     """Find best subgroup match given a short sequence and the family to search"""
     
     # Import libraries
-    import pexpect
+    import os
     
     # Setup
     subgroup_file = subgroup_dict[family]
@@ -591,7 +586,6 @@ def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns):
     import os
     from PIL import Image
     
-    plots_completed = 0
     circular_plot_list = []
     linear_plot_list = []
     temp_file = 'temp.png'

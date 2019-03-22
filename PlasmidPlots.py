@@ -5,7 +5,7 @@
 
 def url_input():
     """
-    Takes urls and returns a list.
+    Takes urls and returns a list
     
     The urls can be input directly, or in the form of a text file with each url on a separate line.
     """
@@ -274,7 +274,7 @@ def read_colors(file):
     return color_dict, subgroup_dict
 
 
-def pil_grid(images, columns):
+def pil_grid(images, columns=5):
     """Takes an array of images and a column count, and generates a grid using the images"""
     
     # Import libraries
@@ -357,7 +357,7 @@ def generate_legend(color_dict, font_size, file_name='legend.png'):
     plt.close('all')
 
 
-def append_legend(image, legend_image, legend_size=(300, 300), legend_location='bottom right'):
+def append_legend(image, legend_image, legend_size=(200, 200), legend_placement='bottom right'):
     """Adds legend to an image"""
     
     from PIL import Image
@@ -371,15 +371,30 @@ def append_legend(image, legend_image, legend_size=(300, 300), legend_location='
     legend.thumbnail(legend_size)
     legend_width, legend_height = legend.size
     
-    legend_x = plot_width - legend_width
-    legend_y = plot_height
+    placement = legend_placement.split()
+    vertical_placement = placement[0]
+    horizontal_placement = placement[1]
     
-    # New image
+    if vertical_placement == 'bottom':
+        plot_y = 0
+        legend_y = plot_height
+    else:
+        plot_y = legend_height
+        legend_y = 0
+    
+    if horizontal_placement == 'right':
+        legend_x = plot_width - legend_width
+    else:
+        legend_x = 0
+    
+    # Create new blank image and paste in old image and legend
     new_image = Image.new('RGB', (plot_width, plot_height + legend_height), (255, 255, 255))
-    new_image.paste(old_image, (0, 0))
+    new_image.paste(old_image, (0, plot_y))
     old_image.close()
     new_image.paste(legend, (legend_x, legend_y), legend)
     legend.close()
+    
+    # Save new image using old image file name
     new_image.save(image)
 
 
@@ -688,7 +703,7 @@ def file_to_dict(filename, dna_input, replen, subgroup_dict):
     return data_dict
 
 
-def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns, legend='legend.png'):
+def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns=5, legend='legend.png'):
     """Loops over every key in dictionary and creates a plot for each, then generates images"""
     
     # Import libraries

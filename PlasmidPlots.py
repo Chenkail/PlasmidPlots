@@ -200,6 +200,35 @@ def sequence_download(id_dict):
                 os.remove(file)
 
 
+def sequence_finder(dna_file, plasmid):
+    """Finds corresponding DNA sequence in file given plasmid name"""
+    
+    # Import libraries
+    from itertools import islice
+    
+    # Variable setup
+    line_number = 0
+    sequence = ''
+    recording = False
+    
+    with open(dna_file) as dna_input:
+        # Move to line identifying the plasmid being searched for
+        for line in islice(dna_input, None):
+            line_number += 1
+            if recording:
+                if '>' not in line:
+                    sequence += line.strip()
+                else:
+                    break
+
+            if plasmid in line:
+                recording = True
+    
+    sequence = sequence.strip().replace(" ", "")
+    
+    return sequence
+
+
 def fasta(dna_input, protein_input, output_file):
     """
     Runs FASTA given two filepaths and the name of the file to output to.
@@ -716,32 +745,14 @@ def subgroup_search(sequence, family, subgroup_dict):
             os.remove(file)
 
 
-def short_protein_sequence_search(plasmid, start, end, dna_input):
+def short_protein_sequence_search(plasmid, start, end, dna_file):
     """Returns trimmed sequence string given the plasmid name to cut and starting/ending locations"""
     
     # Import libraries
     from itertools import islice
     
-    # Variable setup
-    line_number = 0
-    sequence = ''
-    recording = False
-    
-    with open(dna_input) as dna_file:
-        # Move to line identifying the plasmid being searched for
-        for line in islice(dna_file, None):
-            line_number += 1
-            if recording:
-                if '>' not in line:
-                    sequence += line.strip()
-                else:
-                    break
-
-            if plasmid in line:
-                recording = True
-    
     # Return sliced portion of sequence
-    untrimmed_sequence = sequence.strip().replace(" ", "")
+    untrimmed_sequence = sequence_finder(dna_file, plasmid)
     trimmed_sequence = untrimmed_sequence[start:end - 1]
     return trimmed_sequence
 
@@ -830,7 +841,7 @@ def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns=5
         append_legend(image, legend, strain)
         
         if border:
-            # Add border and then white buffer around it
+            # Add black border and then white buffer around it
             add_border(image)
             add_border(image, border_color='#FFFFFF', border_dimensions=(5, 5))
     
@@ -880,7 +891,7 @@ def main():
     url_list = url_input()
 
     # Take filepath input
-    # Can just be file name if in content folder (e.g. replicons.fna)
+    # Can just be file name if in content folder (e.g. foo.txt)
     dna_input = 'replicons.txt'
     protein_input = input("Enter filepath for protein sequences: ").strip()
     if protein_input == '':

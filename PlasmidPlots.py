@@ -471,6 +471,7 @@ def images_to_pdf(file_list, filename='images.pdf'):
         # Get image dimensions
         image = Image.open(file)
         dimensions = image.size
+        image.close()
         
         # Create new page in pdf and add image
         pdf.add_page(format=dimensions)
@@ -968,7 +969,7 @@ def main():
     
     image_list = []
     for strain, data in sorted_dict.items():
-        circular, linear = dict_to_plot(strain, data, sequence_color_dict, 5)
+        circular, linear = dict_to_plot(strain, data, sequence_color_dict, 5, border=True)
         print("Strain plotted: " + strain)
         
         image_list.append(circular)
@@ -985,9 +986,7 @@ def main():
     start_time = timer()
     
     temp_files = []
-    
-    # Comment out following line to keep individual image files
-    temp_files = image_list
+    # temp_files = image_list # Comment out line to keep individual image files
     temp_files.append(fasta_output)
     
     for file in temp_files:

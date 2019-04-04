@@ -1,6 +1,3 @@
-## Use matplotlib to draw the plasmids in replicons.fna / output.txt.
-
-
 # -------- Begin functions -------- #
 
 def url_input():
@@ -22,6 +19,7 @@ def url_input():
             if next_input not in url_list:
                 url_list.append(next_input)
                 url_count += 1
+        
         # Otherwise, assume input is a file and add each line
         else: 
             with open(next_input) as url_file:
@@ -36,6 +34,7 @@ def url_input():
     print("URL count: " + str(url_count))
     return url_list
 
+
 def strain_name_scrape(url):
     """
     Scrapes NCBI for name of a strain given its url
@@ -46,7 +45,7 @@ def strain_name_scrape(url):
     
     # Get html
     html = urllib.request.urlopen(url)
-
+    
     # Parse html
     soup = BeautifulSoup(html, 'html.parser')
     
@@ -58,7 +57,7 @@ def strain_name_scrape(url):
         if "GCA_" in line:
             gca_line = line
             break
-
+    
     split_line = gca_line.split()
     gca_id = split_line[0]
     
@@ -85,7 +84,6 @@ def strain_name_scrape(url):
     split_text = strain_text.split()
     strain = split_text[1]
     return strain
-
 
 
 def ncbi_scrape(url_list):
@@ -357,10 +355,14 @@ def generate_legend(color_dict, font_size, file_name='legend.png'):
     plt.close('all')
 
 
-def append_legend(image, legend_image, legend_size=(200, 200), legend_placement='bottom right'):
-    """Adds legend to an image"""
+def append_legend(image, legend_image, title='', include_title=True, title_font='/usr/share/fonts/truetype/liberation/LiberationSansNarrow-Regular.ttf', title_font_size=48, title_location='bottom left', include_legend=True, legend_size=(200, 200), legend_location='bottom right'):
+    """Adds legend and/or title to an image"""
     
-    from PIL import Image
+    # Import libraries
+    from PIL import Image, ImageDraw, ImageFont
+    
+    # Set constants
+    VERTICAL_BUFFER = 10
     
     # Get dimensions of plot image
     old_image = Image.open(image)
@@ -371,30 +373,84 @@ def append_legend(image, legend_image, legend_size=(200, 200), legend_placement=
     legend.thumbnail(legend_size)
     legend_width, legend_height = legend.size
     
-    placement = legend_placement.split()
-    vertical_placement = placement[0]
-    horizontal_placement = placement[1]
+    placement = legend_location.split()
+    legend_vertical_placement = placement[0]
+    legend_horizontal_placement = placement[1]
     
-    if vertical_placement == 'bottom':
-        plot_y = 0
-        legend_y = plot_height
+    placement = title_location.split()
+    title_vertical_placement = placement[0]
+    title_horizontal_placement = placement[1]
+    
+    # Set coordinates for pasting
+    if title_horizontal_placement == 'left':
+        title_x = 50
     else:
-        plot_y = legend_height
-        legend_y = 0
+        title_x = plot_width - 150
     
-    if horizontal_placement == 'right':
+    if title_vertical_placement == 'bottom':
+        plot_y = 0
+        title_y = plot_height + VERTICAL_BUFFER
+    else:
+        plot_y = 100
+        title_y = VERTICAL_BUFFER
+    
+    plot_bottom = plot_y + plot_height
+    
+    if legend_horizontal_placement == 'right':
         legend_x = plot_width - legend_width
     else:
-        legend_x = 0
+        legend_x = -75
     
-    # Create new blank image and paste in old image and legend
-    new_image = Image.new('RGB', (plot_width, plot_height + legend_height), (255, 255, 255))
+    if legend_vertical_placement == 'bottom':
+        legend_y = plot_bottom
+    else:
+        plot_y = max(legend_height, plot_y)
+        legend_y = 0
+    
+    legend_bottom = legend_y + legend_height
+    
+    new_image_height = max(plot_bottom, legend_bottom)
+    
+    # Create new blank image
+    new_image = Image.new('RGB', (plot_width, new_image_height), (255, 255, 255))
+    
+    # Paste in old image
     new_image.paste(old_image, (0, plot_y))
     old_image.close()
-    new_image.paste(legend, (legend_x, legend_y), legend)
-    legend.close()
+    
+    # Paste in legend
+    if include_legend:
+        new_image.paste(legend, (legend_x, legend_y), legend)
+        legend.close()
+    
+    # Add title
+    if include_title:
+        idraw = ImageDraw.Draw(new_image)
+        ifont = ImageFont.truetype(title_font, title_font_size)
+        idraw.text((title_x, title_y), title, fill=(0, 0, 0), font=ifont)
     
     # Save new image using old image file name
+    new_image.save(image)
+
+
+def add_border(image, border_color='#000000', border_dimensions=(3, 3)):
+    """Adds a border to an image"""
+    
+    # Import libraries
+    from PIL import Image
+    
+    # Get dimensions of original image
+    old_image = Image.open(image)
+    old_width, old_height = old_image.size
+    
+    # Calculate dimensions of new image
+    horizontal_padding = border_dimensions[0]
+    vertical_padding = border_dimensions[1]
+    new_width = old_width + horizontal_padding*2
+    new_height = old_height + vertical_padding*2
+    
+    new_image = Image.new('RGB', (new_width, new_height), border_color)
+    new_image.paste(old_image, border_dimensions)
     new_image.save(image)
 
 
@@ -581,10 +637,14 @@ def circular_plot(plasmid, data, sequence_color_dict):
                             arrowprops=dict(facecolor='black', arrowstyle='-',),)
     
     # Label - plasmid name and length
-    label_x = 0
-    label_y = 0
+    label_x = 0.5
+    if plasmid_length >= 25000:
+        label_y = 0.5
+    else:
+        label_y = -0.4
+    
     label_text = str(sequence_name) + "\n" + str(plasmid_length) + " base pairs"
-    plt.text(label_x, label_y, label_text, ha='center')
+    plt.text(label_x, label_y, label_text, ha='center', transform=circle.transAxes)
     
     # Hide background and save plot to image
     plt.axis('off')
@@ -685,8 +745,8 @@ def file_to_dict(filename, dna_input, replen, subgroup_dict):
             family = line.split()[1]
             start = min(int(line.split()[6]), int(line.split()[7]))
             end = max(int(line.split()[6]), int(line.split()[7]))
-            protein_sequence = short_protein_sequence_search(plasmid, start, end, dna_input)
             if family in subgroup_dict.keys():
+                protein_sequence = short_protein_sequence_search(plasmid, start, end, dna_input)
                 subgroup = subgroup_search(protein_sequence, family, subgroup_dict)
             else:
                 subgroup = ''
@@ -713,6 +773,8 @@ def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns=5
     circular_plot_list = []
     linear_plot_list = []
     temp_file = 'temp.png'
+    
+    # Plot based on plasmid type and sort into two lists
     for plasmid, data in data_dict.items():
         if ('cp' in plasmid):
             circular_plot(plasmid, data, sequence_color_dict)
@@ -726,18 +788,22 @@ def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns=5
             image.load()
             linear_plot_list.append(image)
     
+    # Combine circular plot images
     circular_plots = pil_grid(circular_plot_list, circular_plot_columns)
     circular_plot_file = strain + "_circular_plots.png"
     circular_plots.save(circular_plot_file)
     circular_plots.close()
     
+    # Combine linear plot images
     linear_plots = pil_grid(linear_plot_list, 1)
     linear_plot_file = strain + "_linear_plots.png"
     linear_plots.save(linear_plot_file)
     linear_plots.close()
     
-    append_legend(circular_plot_file, legend)
-    append_legend(linear_plot_file, legend)
+    for image in (circular_plot_file, linear_plot_file):
+        append_legend(image, legend, strain)
+        add_border(image)
+        add_border(image, border_color='#FFFFFF', border_dimensions=(5, 5))
     
     # Clean up temporary files
     temp_files = [temp_file,]
@@ -811,7 +877,6 @@ def main():
     start_time = timer()
     
     ncbi_id_dict = ncbi_scrape(url_list)
-    
     
     end_time = timer()
     time = TIMER_FORMAT%(end_time - start_time)

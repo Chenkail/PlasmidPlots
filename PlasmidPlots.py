@@ -40,6 +40,7 @@ def strain_name_scrape(url):
     Scrapes NCBI for name of a strain given its url
     """
     
+    # Import libraries
     import urllib
     from bs4 import BeautifulSoup
     
@@ -454,6 +455,29 @@ def add_border(image, border_color='#000000', border_dimensions=(3, 3)):
     new_image.save(image)
 
 
+def images_to_pdf(file_list, filename='images.pdf'):
+    """
+    Converts a list of image files into a single PDF file, with one image per page
+    
+    Note: Must have installed fpdf2, not fpdf
+    """
+    
+    # Import libraries
+    from fpdf import FPDF
+    from PIL import Image
+    
+    pdf = FPDF(unit='pt')
+    for file in file_list:
+        # Get image dimensions
+        image = Image.open(file)
+        dimensions = image.size
+        
+        # Create new page in pdf and add image
+        pdf.add_page(format=dimensions)
+        pdf.image(file, 0, 0)
+    pdf.output(filename, 'F')
+
+
 def linear_plot(plasmid, data, sequence_color_dict):
     """Plots a linear plasmid given the plasmid name and data list"""
     
@@ -724,6 +748,7 @@ def short_protein_sequence_search(plasmid, start, end, dna_input):
 def file_to_dict(filename, dna_input, replen, subgroup_dict):
     """Converts FASTA output file to a dictionary for plotting"""
     
+    # Import libraries
     from itertools import islice
     
     data_dict = {}
@@ -763,7 +788,7 @@ def file_to_dict(filename, dna_input, replen, subgroup_dict):
     return data_dict
 
 
-def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns=5, legend='legend.png'):
+def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns=5, legend='legend.png', border=True):
     """Loops over every key in dictionary and creates a plot for each, then generates images"""
     
     # Import libraries
@@ -802,8 +827,11 @@ def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns=5
     
     for image in (circular_plot_file, linear_plot_file):
         append_legend(image, legend, strain)
-        add_border(image)
-        add_border(image, border_color='#FFFFFF', border_dimensions=(5, 5))
+        
+        if border:
+            # Add border and then white buffer around it
+            add_border(image)
+            add_border(image, border_color='#FFFFFF', border_dimensions=(5, 5))
     
     # Clean up temporary files
     temp_files = [temp_file,]
@@ -811,6 +839,9 @@ def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns=5
     for file in temp_files:
         if os.path.isfile(file):
             os.remove(file)
+    
+    # Return image file names
+    return circular_plot_file, linear_plot_file
 
 
 def strain_sort(data_dict):
@@ -935,9 +966,16 @@ def main():
     # Plot all strains
     start_time = timer()
     
+    image_list = []
     for strain, data in sorted_dict.items():
-        dict_to_plot(strain, data, sequence_color_dict, 5)
+        circular, linear = dict_to_plot(strain, data, sequence_color_dict, 5)
         print("Strain plotted: " + strain)
+        
+        image_list.append(circular)
+        image_list.append(linear)
+    
+    images_to_pdf(image_list, 'plots.pdf')
+    print("PDF generated.")
     
     end_time = timer()
     time = TIMER_FORMAT%(end_time - start_time)
@@ -946,7 +984,12 @@ def main():
     # Clean up temporary files
     start_time = timer()
     
-    temp_files = [fasta_output,]
+    temp_files = []
+    
+    # Comment out following line to keep individual image files
+    temp_files = image_list
+    temp_files.append(fasta_output)
+    
     for file in temp_files:
         if os.path.isfile(file):
             os.remove(file)

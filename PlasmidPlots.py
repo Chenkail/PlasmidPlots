@@ -191,13 +191,13 @@ def sequence_download(id_dict):
                 for line in in_file:
                     out_file.write(line)
         
-        # Clean up temporary files
-        temp_files = [temp1,
-                      temp2,]
+    # Clean up temporary files
+    temp_files = [temp1,
+                  temp2,]
 
-        for file in temp_files:
-            if os.path.isfile(file):
-                os.remove(file)
+    for file in temp_files:
+        if os.path.isfile(file):
+            os.remove(file)
 
 
 def sequence_finder(dna_file, plasmid):
@@ -229,7 +229,7 @@ def sequence_finder(dna_file, plasmid):
     return sequence
 
 
-def fasta(dna_input, protein_input, output_file):
+def fasta(dna_sequence_file, protein_input, output_file):
     """
     Runs FASTA given two filepaths and the name of the file to output to.
     
@@ -245,7 +245,7 @@ def fasta(dna_input, protein_input, output_file):
     pexpect.run(command)
     
     # Run FASTX using variables
-    command = 'bash -c ' + '"if [ \':$PATH:\' != *\':/content/fasta-36.3.8g/bin/fasta36:\'* ]; then PATH=\'$PATH:/content/fasta-36.3.8g/bin\'; fi && fastx36 -m 8 -E 0.05 ' + dna_input + ' ' + protein_input + ' > ' + output_file + '"'
+    command = 'bash -c ' + '"if [ \':$PATH:\' != *\':/content/fasta-36.3.8g/bin/fasta36:\'* ]; then PATH=\'$PATH:/content/fasta-36.3.8g/bin\'; fi && fastx36 -m 8 -E 0.05 ' + dna_sequence_file + ' ' + protein_input + ' > ' + output_file + '"'
     pexpect.run(command)
 
 
@@ -508,7 +508,7 @@ def images_to_pdf(file_list, filename='images.pdf'):
     pdf.output(filename, 'F')
 
 
-def linear_plot(plasmid, data, sequence_color_dict):
+def linear_plot(plasmid, data, sequence_color_dict, baseline_color_scale=None):
     """Plots a linear plasmid given the plasmid name and data list"""
     
     # Import libraries
@@ -593,7 +593,7 @@ def linear_plot(plasmid, data, sequence_color_dict):
     plt.close('all')
 
 
-def circular_plot(plasmid, data, sequence_color_dict):
+def circular_plot(plasmid, data, sequence_color_dict, baseline_color_scale=None):
     """Plots a circular plasmid given the name and the data list"""
     
     # Import libraries
@@ -757,7 +757,7 @@ def short_protein_sequence_search(plasmid, start, end, dna_file):
     return trimmed_sequence
 
 
-def file_to_dict(filename, dna_input, replen, subgroup_dict):
+def file_to_dict(filename, dna_sequence_file, replen, subgroup_dict):
     """Converts FASTA output file to a dictionary for plotting"""
     
     # Import libraries
@@ -783,7 +783,7 @@ def file_to_dict(filename, dna_input, replen, subgroup_dict):
             start = min(int(line.split()[6]), int(line.split()[7]))
             end = max(int(line.split()[6]), int(line.split()[7]))
             if family in subgroup_dict.keys():
-                protein_sequence = short_protein_sequence_search(plasmid, start, end, dna_input)
+                protein_sequence = short_protein_sequence_search(plasmid, start, end, dna_sequence_file)
                 subgroup = subgroup_search(protein_sequence, family, subgroup_dict)
             else:
                 subgroup = ''
@@ -800,7 +800,9 @@ def file_to_dict(filename, dna_input, replen, subgroup_dict):
     return data_dict
 
 
-def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns=5, legend='legend.png', border=True):
+def dict_to_plot(strain, data_dict, sequence_color_dict, 
+                 circular_plot_columns=5, legend='legend.png', 
+                 border=True, baseline_color_scale=None):
     """Loops over every key in dictionary and creates a plot for each, then generates images"""
     
     # Import libraries
@@ -814,13 +816,13 @@ def dict_to_plot(strain, data_dict, sequence_color_dict, circular_plot_columns=5
     # Plot based on plasmid type and sort into two lists
     for plasmid, data in data_dict.items():
         if ('cp' in plasmid):
-            circular_plot(plasmid, data, sequence_color_dict)
+            circular_plot(plasmid, data, sequence_color_dict, baseline_color_scale=baseline_color_scale)
             image = Image.open(temp_file)
             image.load()
             circular_plot_list.append(image)
             
         else:
-            linear_plot(plasmid, data, sequence_color_dict)
+            linear_plot(plasmid, data, sequence_color_dict, baseline_color_scale=baseline_color_scale)
             image = Image.open(temp_file)
             image.load()
             linear_plot_list.append(image)
@@ -892,7 +894,7 @@ def main():
 
     # Take filepath input
     # Can just be file name if in content folder (e.g. foo.txt)
-    dna_input = 'replicons.txt'
+    dna_sequence_file = 'replicons.txt'
     protein_input = input("Enter filepath for protein sequences: ").strip()
     if protein_input == '':
         protein_input = 'pfam.txt'
@@ -916,7 +918,7 @@ def main():
     time = TIMER_FORMAT%(end_time - start_time)
     print("Legend generated." + TIME_STRING%time)
     
-    # Add all plasmid sequences from each url to replicons.fna
+    # Add all plasmid sequences from each url to replicons.txt
     start_time = timer()
     
     ncbi_id_dict = ncbi_scrape(url_list)
@@ -937,7 +939,7 @@ def main():
     start_time = timer()
     
     fasta_output = 'output.txt'
-    fasta(dna_input, protein_input, fasta_output)
+    fasta(dna_sequence_file, protein_input, fasta_output)
     
     end_time = timer()
     time = TIMER_FORMAT%(end_time - start_time)
@@ -960,7 +962,7 @@ def main():
     # Create dictionary from FASTA output
     start_time = timer()
     
-    data_dict = file_to_dict(fasta_output, dna_input, replen, subgroup_dict)
+    data_dict = file_to_dict(fasta_output, dna_sequence_file, replen, subgroup_dict)
     
     end_time = timer()
     time = TIMER_FORMAT%(end_time - start_time)

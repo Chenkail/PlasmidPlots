@@ -508,7 +508,56 @@ def images_to_pdf(file_list, filename='images.pdf'):
     pdf.output(filename, 'F')
 
 
-def linear_plot(plasmid, data, sequence_color_dict, baseline_color_scale=None):
+def gc_content_dict(dna_file, plasmid, window=1000):
+    """Returns list of GC content percentages for each window"""
+    
+    # Import libraries
+    from Bio.SeqUtils import GC
+    import math
+    
+    # Pull DNA sequence into a string
+    sequence = sequence_finder(dna_file, plasmid)
+    
+    length = len(sequence)
+    chunks = math.ceil(length/window)
+    
+    gc_data_dict = {}
+    for i in range(chunks):
+        start = i*window
+        if i == chunks - 1:
+            end = length
+        else:
+            end = (i+1) * window
+        
+        sequence_chunk = sequence[start:end]
+        
+        gc_content = GC(sequence_chunk)/100
+        key = str(start + 1) + "-" + str(end)
+        gc_data_dict[key] = gc_content
+    
+    return gc_data_dict
+
+
+def decimal_to_rgb_gray(decimal, minimum=0, maximum=255):
+    """Converts a decimal value (0-1) to a hex RGB grayscale value between a max and min (default is 0-255)"""
+    
+    # Calculate the hex value of the decimal
+    scale = maximum - minimum + 1
+    temp_string = hex(int(decimal*scale + minimum))
+    
+    # Remove the 0x from the start of the string
+    hex_scale = temp_string.split('x')[1]
+    
+    # Test if hex_scale is 0 and if so convert to 00
+    if len(hex_scale) == 1:
+        hex_scale = '0' + hex_scale
+    
+    # Repeat the string three times and add a # to the start
+    hex_string = '#' + hex_scale*3
+    return(hex_string)
+
+
+def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None):
     """Plots a linear plasmid given the plasmid name and data list"""
     
     # Import libraries
@@ -537,7 +586,17 @@ def linear_plot(plasmid, data, sequence_color_dict, baseline_color_scale=None):
     linear = plt.subplot(111)
     linear.set_facecolor('white')
     background = linear.barh(0, plasmid_length, height=20, color='white')
-    baseline = linear.barh(0, plasmid_length, height=1, color=sequence_color_dict['Base Color'])
+    
+    if baseline_custom_colors != None:
+        # Use dictionary to plot baseline with custom colors
+        for location, color in baseline_custom_colors.items():
+            first_base = int(location.split('-')[0])
+            last_base = int(location.split('-')[1])
+            length = last_base - first_base
+            baseline = linear.barh(0, length, left=first_base, height=1, color=color)
+        
+    else:
+        baseline = linear.barh(0, plasmid_length, height=1, color=sequence_color_dict['Base Color'])
     
     for index in range(1, data_count):
         sequence = data[index]
@@ -593,7 +652,7 @@ def linear_plot(plasmid, data, sequence_color_dict, baseline_color_scale=None):
     plt.close('all')
 
 
-def circular_plot(plasmid, data, sequence_color_dict, baseline_color_scale=None):
+def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None):
     """Plots a circular plasmid given the name and the data list"""
     
     # Import libraries
@@ -620,12 +679,6 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_color_scale=None)
     
     circle = plt.subplot(111, polar=True)
     circle.set_theta_offset(np.radians(90)) # Move origin to top instead of right
-    baseline = circle.bar(0, 
-                          circle_width, 
-                          width=-np.radians(360), 
-                          bottom=circle_bottom, 
-                          align='edge', 
-                          color=sequence_color_dict['Base Color'],)
     
     # Use data from first protein family sequence for initial minimum/maximum values
     first_data_point = data[1]
@@ -644,7 +697,30 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_color_scale=None)
     
     center = (minimum + maximum)/2
     
-    # Plot
+    # Plot baseline
+    if baseline_custom_colors != None:
+        # Use dictionary to plot baseline with custom colors
+        for location, color in baseline_custom_colors.items():
+            first_base = int(location.split('-')[0])
+            last_base = int(location.split('-')[1])
+            length = last_base - first_base
+            gene_plot_start = ((center - first_base) / plasmid_length) * np.radians(360)
+            gene_plot_width = (length / plasmid_length) * np.radians(360)
+            baseline = circle.bar(gene_plot_start, 
+                          circle_width, 
+                          width=gene_plot_width, 
+                          bottom=circle_bottom, 
+                          align='edge', 
+                          color=color,)
+    else:
+        baseline = circle.bar(0, 
+                          circle_width, 
+                          width=-np.radians(360), 
+                          bottom=circle_bottom, 
+                          align='edge', 
+                          color=sequence_color_dict['Base Color'],)
+    
+    # Plot data
     for index in range(1, data_count):
         sequence = data[index]
         # Get sequence data
@@ -802,7 +878,7 @@ def file_to_dict(filename, dna_sequence_file, replen, subgroup_dict):
 
 def dict_to_plot(strain, data_dict, sequence_color_dict, 
                  circular_plot_columns=5, legend='legend.png', 
-                 border=True, baseline_color_scale=None):
+                 border=True, plot_baseline_color_scale=None, dna_file=None):
     """Loops over every key in dictionary and creates a plot for each, then generates images"""
     
     # Import libraries
@@ -815,14 +891,32 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
     
     # Plot based on plasmid type and sort into two lists
     for plasmid, data in data_dict.items():
-        if ('cp' in plasmid):
-            circular_plot(plasmid, data, sequence_color_dict, baseline_color_scale=baseline_color_scale)
+        
+        if dna_file != None:
+            # Set color scale for plot baselines
+            if plot_baseline_color_scale == 'gc content':
+                gc_dict = gc_content_dict(dna_file, plasmid)
+                baseline_color_scale = {}
+                
+                for location, decimal_scale in gc_dict.items():
+                    baseline_color_scale[location] = decimal_to_rgb_gray(decimal_scale)
+            
+            else:
+                baseline_color_scale = None
+        else:
+            baseline_color_scale = None
+        
+        
+        if 'cp' in plasmid.split('_')[1]:
+            # Plot
+            circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=baseline_color_scale)
             image = Image.open(temp_file)
             image.load()
             circular_plot_list.append(image)
             
         else:
-            linear_plot(plasmid, data, sequence_color_dict, baseline_color_scale=baseline_color_scale)
+            # Plot
+            linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=baseline_color_scale)
             image = Image.open(temp_file)
             image.load()
             linear_plot_list.append(image)
@@ -982,7 +1076,9 @@ def main():
     
     image_list = []
     for strain, data in sorted_dict.items():
-        circular, linear = dict_to_plot(strain, data, sequence_color_dict, 5, border=True)
+        circular, linear = dict_to_plot(strain, data, sequence_color_dict, 5, 
+                                        border=True, plot_baseline_color_scale='gc content', 
+                                        dna_file=dna_sequence_file)
         print("Strain plotted: " + strain)
         
         image_list.append(circular)

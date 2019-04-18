@@ -678,7 +678,6 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
     plt.close('all')
     
     circle = plt.subplot(111, polar=True)
-    circle.set_theta_offset(np.radians(90)) # Move origin to top instead of right
     
     # Use data from first protein family sequence for initial minimum/maximum values
     first_data_point = data[1]
@@ -695,7 +694,10 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
         if sequence_end > maximum:
             maximum = sequence_end
     
-    center = (minimum + maximum)/2
+    # Center the plot
+    center = int(minimum + maximum)/2
+    offset_angle = -(center/plasmid_length) * np.radians(360) + np.radians(90)
+    circle.set_theta_offset(offset_angle)
     
     # Plot baseline
     if baseline_custom_colors != None:
@@ -704,7 +706,7 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
             first_base = int(location.split('-')[0])
             last_base = int(location.split('-')[1])
             length = last_base - first_base
-            gene_plot_start = ((center - first_base) / plasmid_length) * np.radians(360)
+            gene_plot_start = ((first_base) / plasmid_length) * np.radians(360)
             gene_plot_width = (length / plasmid_length) * np.radians(360)
             baseline = circle.bar(gene_plot_start, 
                           circle_width, 
@@ -730,7 +732,7 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
         sequence_family = str(sequence[0])
 
         # Plot gene onto plasmid
-        gene_plot_start = ((center - sequence_start) / plasmid_length) * np.radians(360)
+        gene_plot_start = ((sequence_start) / plasmid_length) * np.radians(360)
         gene_plot_width = (sequence_length / plasmid_length) * np.radians(360)
         current_color = sequence_color_dict[sequence_family]
         gene_plot = circle.bar(gene_plot_start, 
@@ -748,13 +750,13 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
             # Make sure angle is between 0 and 2π
             line_angle %= (2*np.pi)
             
-            # Rotate label to point towards center of circle and
-            # make the bottom side of the text face the bottom,
-            # no matter which side of the plot it is on
-            if np.degrees(line_angle) < 180:
-                label_angle = np.degrees(line_angle + np.pi*3/2)
-            else:
-                label_angle = np.degrees(line_angle + np.pi/2)
+            # Rotate label text to point towards center of circle
+            label_angle = np.degrees(line_angle + offset_angle)
+            
+            # Flip text if on left side of plot so it's not upside down
+            if label_angle > 90 and label_angle < 270:
+                label_angle += 180
+            
             # Add annotation to plot
             circle.annotate(subgroup, 
                             xy=(line_angle, 4), 

@@ -385,7 +385,7 @@ def generate_legend(color_dict, font_size, file_name='legend.png'):
     plt.close('all')
 
 
-def append_legend(image, legend_image, title='', include_title=True, title_font='/usr/share/fonts/truetype/liberation/LiberationSansNarrow-Regular.ttf', title_font_size=48, title_location='bottom left', include_legend=True, legend_size=(200, 200), legend_location='bottom right'):
+def append_legend(image, legend_image, title='', include_title=True, title_font='/usr/share/fonts/truetype/liberation/LiberationSansNarrow-Regular.ttf', title_font_size=48, title_location='bottom left', include_legend=True, legend_size=(600, 600), legend_location='bottom right'):
     """Adds legend and/or title to an image"""
     
     # Import libraries
@@ -412,30 +412,32 @@ def append_legend(image, legend_image, title='', include_title=True, title_font=
     title_horizontal_placement = placement[1]
     
     # Set coordinates for pasting
+    if title_vertical_placement == 'bottom':
+        plot_y = 0
+        title_y = plot_height
+    else:
+        plot_y = 100
+        title_y = 0
+    
+    title_y += VERTICAL_BUFFER
+    
     if title_horizontal_placement == 'left':
         title_x = 50
     else:
         title_x = plot_width - 150
     
-    if title_vertical_placement == 'bottom':
-        plot_y = 0
-        title_y = plot_height + VERTICAL_BUFFER
-    else:
-        plot_y = 100
-        title_y = VERTICAL_BUFFER
-    
     plot_bottom = plot_y + plot_height
-    
-    if legend_horizontal_placement == 'right':
-        legend_x = plot_width - legend_width
-    else:
-        legend_x = -75
     
     if legend_vertical_placement == 'bottom':
         legend_y = plot_bottom
     else:
         plot_y = max(legend_height, plot_y)
         legend_y = 0
+    
+    if legend_horizontal_placement == 'right':
+        legend_x = plot_width - legend_width
+    else:
+        legend_x = -75
     
     legend_bottom = legend_y + legend_height
     
@@ -508,7 +510,7 @@ def images_to_pdf(file_list, filename='images.pdf'):
     pdf.output(filename, 'F')
 
 
-def gc_content_dict(dna_file, plasmid, window=1000):
+def gc_content_dict(dna_file, plasmid, window=100):
     """Returns list of GC content percentages for each window"""
     
     # Import libraries
@@ -532,6 +534,7 @@ def gc_content_dict(dna_file, plasmid, window=1000):
         sequence_chunk = sequence[start:end]
         
         gc_content = GC(sequence_chunk)/100
+        
         key = str(start + 1) + "-" + str(end)
         gc_data_dict[key] = gc_content
     
@@ -542,13 +545,13 @@ def decimal_to_rgb_gray(decimal, minimum=0, maximum=255):
     """Converts a decimal value (0-1) to a hex RGB grayscale value between a max and min (default is 0-255)"""
     
     # Calculate the hex value of the decimal
-    scale = maximum - minimum + 1
+    scale = maximum - minimum
     temp_string = hex(int(decimal*scale + minimum))
     
     # Remove the 0x from the start of the string
     hex_scale = temp_string.split('x')[1]
     
-    # Test if hex_scale is 0 and if so convert to 00
+    # Test if hex_scale is a single digit
     if len(hex_scale) == 1:
         hex_scale = '0' + hex_scale
     
@@ -564,7 +567,7 @@ def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None)
     import matplotlib.pyplot as plt
     
     # Set constants
-    HORIZONTAL_SCALE_CONSTANT = 1/4000
+    HORIZONTAL_SCALE_CONSTANT = 3/4000
     # Offsets to avoid labels intersecting plot
     LABEL_Y_ADJUST = 0.1
     LABEL_LEFT_X_ADJUST = -1000
@@ -661,8 +664,8 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
     
     # Set constants
     CHART_BOTTOM = 4
-    CHART_THICKNESS = 1.5
-    CIRCULAR_SCALE_CONSTANT = 1.3
+    CHART_THICKNESS = 0.7
+    CIRCULAR_SCALE_CONSTANT = 4
     
     # Set variables
     sequence_name = plasmid
@@ -825,9 +828,6 @@ def subgroup_search(sequence, family, subgroup_dict):
 
 def short_protein_sequence_search(plasmid, start, end, dna_file):
     """Returns trimmed sequence string given the plasmid name to cut and starting/ending locations"""
-    
-    # Import libraries
-    from itertools import islice
     
     # Return sliced portion of sequence
     untrimmed_sequence = sequence_finder(dna_file, plasmid)

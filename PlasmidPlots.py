@@ -643,7 +643,7 @@ def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None)
     label_x = 0
     label_y = LABEL_UP_ADJUST
     label_text = str(sequence_name) + " - " + str(plasmid_length) + " base pairs"
-    plt.text(label_x, label_y, label_text)
+    plt.text(label_x, label_y, label_text, fontsize=14)
     
     # Fix axes limits
     xmin, xmax, ymin, ymax = plt.axis('tight')

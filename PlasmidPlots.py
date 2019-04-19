@@ -385,7 +385,7 @@ def generate_legend(color_dict, font_size, file_name='legend.png'):
     plt.close('all')
 
 
-def append_legend(image, legend_image, title='', include_title=True, title_font='/usr/share/fonts/truetype/liberation/LiberationSansNarrow-Regular.ttf', title_font_size=48, title_location='bottom left', include_legend=True, legend_size=(600, 600), legend_location='bottom right'):
+def append_legend(image, legend_image, title='', include_title=True, title_font='/usr/share/fonts/truetype/liberation/LiberationSansNarrow-Regular.ttf', title_font_size=48, title_location='bottom left', include_legend=True, legend_size=(1000, 1000), legend_location='bottom right'):
     """Adds legend and/or title to an image"""
     
     # Import libraries
@@ -531,7 +531,7 @@ def gc_content_dict(dna_file, plasmid, window=100):
         else:
             end = (i+1) * window
         
-        sequence_chunk = sequence[start:end]
+        sequence_chunk = sequence[start:end+10]
         
         gc_content = GC(sequence_chunk)/100
         
@@ -762,12 +762,12 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
             
             # Add annotation to plot
             circle.annotate(subgroup, 
-                            xy=(line_angle, 4), 
-                            xytext=(line_angle, 7), 
+                            xy=(line_angle, 4.2), 
+                            xytext=(line_angle, 5.4), 
                             xycoords='data', 
                             ha='center', 
                             va='center', 
-                            fontsize=9, 
+                            fontsize=12, 
                             rotation=label_angle, 
                             arrowprops=dict(facecolor='black', arrowstyle='-',),)
     
@@ -776,10 +776,10 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
     if plasmid_length >= 25000:
         label_y = 0.5
     else:
-        label_y = -0.4
+        label_y = -0.25
     
     label_text = str(sequence_name) + "\n" + str(plasmid_length) + " base pairs"
-    plt.text(label_x, label_y, label_text, ha='center', transform=circle.transAxes)
+    plt.text(label_x, label_y, label_text, fontsize=24, ha='center', transform=circle.transAxes)
     
     # Hide background and save plot to image
     plt.axis('off')

@@ -1,3 +1,5 @@
+from ImageMergeTools.ImageMergeTools import *
+
 # -------- Begin functions -------- #
 
 def url_input():
@@ -302,214 +304,6 @@ def read_colors(file):
     return color_dict, subgroup_dict
 
 
-def pil_grid(images, columns=5):
-    """Takes an array of images and a column count, and generates a grid using the images"""
-    
-    # Import libraries
-    from PIL import Image
-    import numpy as np
-    
-    # Count the images and set row/column count
-    image_count = len(images)
-    
-    # If the number of images is less than the number of columns,
-    # set the number of columns to the number of images
-    column_count = min(image_count, columns)
-    
-    # Set row count
-    rows = image_count // column_count
-    if image_count % column_count != 0:
-        rows += 1
-    
-    # Create arrays of 0s
-    left_x, top_y = [0] * column_count, [0] * rows
-    
-    # Calculate max image width and height for each row/column
-    for index, image in enumerate(images):
-        horizontal_index, vertical_index = index % column_count, index // column_count
-        left_x[horizontal_index] = max(left_x[horizontal_index], image.size[0])
-        top_y[vertical_index] = max(top_y[vertical_index], image.size[1])
-    
-    # Set column width and row height for each row/column
-    left_x, top_y = np.cumsum([0] + left_x), np.cumsum([0] + top_y)
-    
-    # Create blank image
-    image_grid = Image.new('RGB', (left_x[-1], top_y[-1]), color='white')
-    
-    # Add images to grid
-    for index, image in enumerate(images):
-        column = index % column_count
-        row = index // column_count # Note: Max height for last row is irrelevant because there is unlimited space below
-        
-        if columns == 1:
-            x_offset = 0
-        else:
-            x_offset = (left_x[column + 1] - left_x[column])/2 - image.size[0]/2
-        
-        x = left_x[column] + x_offset
-        y_offset = (top_y[row + 1] - top_y[row])/2 - image.size[1]/2
-        if y_offset < 0:
-            y_offset = 0
-        y = top_y[row] + y_offset
-        
-        x = int(x)
-        y = int(y)
-        image_grid.paste(image, (x, y))
-    
-    return image_grid
-
-
-def generate_legend(color_dict, font_size, file_name='legend.png'):
-    """Creates a legend given a dictionary of colors and names"""
-    
-    # Import libraries
-    import copy
-    import matplotlib.patches as mpatches
-    import matplotlib.pyplot as plt
-    
-    # Remove base color from legend
-    legend_colors = copy.deepcopy(color_dict)
-    legend_colors.pop('Base Color')
-    
-    # Create list of patches with colors and names
-    patch_list = []
-    for label, color in sorted(legend_colors.items()):
-        # Create patch and add to list
-        legend_key = mpatches.Patch(label=label, color=color)
-        patch_list.append(legend_key)
-    
-    # Plot and save to image
-    plt.legend(fontsize=font_size, handles=patch_list)
-    plt.axis('off')
-    plt.savefig(file_name, bbox_inches='tight')
-    plt.close('all')
-
-
-def append_legend(image, legend_image, title='', include_title=True, title_font='/usr/share/fonts/truetype/liberation/LiberationSansNarrow-Regular.ttf', title_font_size=48, title_location='bottom left', include_legend=True, legend_size=(1000, 1000), legend_location='bottom right'):
-    """Adds legend and/or title to an image"""
-    
-    # Import libraries
-    from PIL import Image, ImageDraw, ImageFont
-    
-    # Set constants
-    VERTICAL_BUFFER = 10
-    
-    # Get dimensions of plot image
-    old_image = Image.open(image)
-    plot_width, plot_height = old_image.size
-    
-    # Resize legend
-    legend = Image.open(legend_image)
-    legend.thumbnail(legend_size)
-    legend_width, legend_height = legend.size
-    
-    placement = legend_location.split()
-    legend_vertical_placement = placement[0]
-    legend_horizontal_placement = placement[1]
-    
-    placement = title_location.split()
-    title_vertical_placement = placement[0]
-    title_horizontal_placement = placement[1]
-    
-    # Set coordinates for pasting
-    if title_vertical_placement == 'bottom':
-        plot_y = 0
-        title_y = plot_height
-    else:
-        plot_y = 100
-        title_y = 0
-    
-    title_y += VERTICAL_BUFFER
-    
-    if title_horizontal_placement == 'left':
-        title_x = 50
-    else:
-        title_x = plot_width - 150
-    
-    plot_bottom = plot_y + plot_height
-    
-    if legend_vertical_placement == 'bottom':
-        legend_y = plot_bottom
-    else:
-        plot_y = max(legend_height, plot_y)
-        legend_y = 0
-    
-    if legend_horizontal_placement == 'right':
-        legend_x = plot_width - legend_width
-    else:
-        legend_x = -75
-    
-    legend_bottom = legend_y + legend_height
-    
-    new_image_height = max(plot_bottom, legend_bottom)
-    
-    # Create new blank image
-    new_image = Image.new('RGB', (plot_width, new_image_height), (255, 255, 255))
-    
-    # Paste in old image
-    new_image.paste(old_image, (0, plot_y))
-    old_image.close()
-    
-    # Paste in legend
-    if include_legend:
-        new_image.paste(legend, (legend_x, legend_y), legend)
-        legend.close()
-    
-    # Add title
-    if include_title:
-        idraw = ImageDraw.Draw(new_image)
-        ifont = ImageFont.truetype(title_font, title_font_size)
-        idraw.text((title_x, title_y), title, fill=(0, 0, 0), font=ifont)
-    
-    # Save new image using old image file name
-    new_image.save(image)
-
-
-def add_border(image, border_color='#000000', border_dimensions=(3, 3)):
-    """Adds a border to an image"""
-    
-    # Import libraries
-    from PIL import Image
-    
-    # Get dimensions of original image
-    old_image = Image.open(image)
-    old_width, old_height = old_image.size
-    
-    # Calculate dimensions of new image
-    horizontal_padding = border_dimensions[0]
-    vertical_padding = border_dimensions[1]
-    new_width = old_width + horizontal_padding*2
-    new_height = old_height + vertical_padding*2
-    
-    new_image = Image.new('RGB', (new_width, new_height), border_color)
-    new_image.paste(old_image, border_dimensions)
-    new_image.save(image)
-
-
-def images_to_pdf(file_list, filename='images.pdf'):
-    """
-    Converts a list of image files into a single PDF file, with one image per page
-    
-    Note: Must have installed fpdf2, not fpdf
-    """
-    
-    # Import libraries
-    from fpdf import FPDF
-    from PIL import Image
-    
-    pdf = FPDF(unit='pt')
-    for file in file_list:
-        # Get image dimensions
-        image = Image.open(file)
-        dimensions = image.size
-        image.close()
-        
-        # Create new page in pdf and add image
-        pdf.add_page(format=dimensions)
-        pdf.image(file, 0, 0)
-    pdf.output(filename, 'F')
-
-
 def gc_content_dict(dna_file, plasmid, window=100):
     """Returns list of GC content percentages for each window"""
     
@@ -526,12 +320,12 @@ def gc_content_dict(dna_file, plasmid, window=100):
     gc_data_dict = {}
     for i in range(chunks):
         start = i*window
-        if i == chunks - 1:
+        if i == chunks - 1 or i == chunks - 2:
             end = length
         else:
-            end = (i+1) * window
+            end = (i+2) * window
         
-        sequence_chunk = sequence[start:end+10]
+        sequence_chunk = sequence[start:end]
         
         gc_content = GC(sequence_chunk)/100
         
@@ -539,6 +333,38 @@ def gc_content_dict(dna_file, plasmid, window=100):
         gc_data_dict[key] = gc_content
     
     return gc_data_dict
+
+
+def gc_skew_dict(dna_file, plasmid, window):
+    # Import libraries
+    from Bio.SeqUtils import GC_skew
+    import math
+    
+    # Pull DNA sequence into a string
+    sequence = sequence_finder(dna_file, plasmid)
+    
+    # Get list of GC skew values
+    skew_list = GC_skew(sequence, window)
+    
+    chunks = math.ceil(length/window)
+    
+    gc_skew_dict = {}
+    for i in range(chunks):
+        start = i*window
+        if i == chunks - 1 or i == chunks - 2:
+            end = length
+        else:
+            end = (i+2) * window
+        
+        sequence_chunk = sequence[start:end]
+        
+        gc_content = GC(sequence_chunk)/100
+        
+        key = str(start + 1) + "-" + str(end)
+        skew = skew_list[i]
+        gc_skew_dict[key] = skew
+    
+    return gc_skew_dict
 
 
 def decimal_to_rgb_gray(decimal, minimum=0, maximum=255):
@@ -891,20 +717,26 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
     linear_plot_list = []
     temp_file = 'temp.png'
     
+    
+    
     # Plot based on plasmid type and sort into two lists
     for plasmid, data in data_dict.items():
         
-        if dna_file != None:
+        if dna_file != None and plot_baseline_color_scale != None:
             # Set color scale for plot baselines
             if plot_baseline_color_scale == 'gc content':
-                gc_dict = gc_content_dict(dna_file, plasmid)
-                baseline_color_scale = {}
+                color_scale_dict = gc_content_dict(dna_file, plasmid)
                 
-                for location, decimal_scale in gc_dict.items():
-                    baseline_color_scale[location] = decimal_to_rgb_gray(decimal_scale)
+            elif plot_baseline_color_scale == 'gc skew':
+                color_scale_dict = gc_skew_dict(dna_file, plasmid)
             
             else:
                 baseline_color_scale = None
+            
+            baseline_color_scale = {}
+            for location, decimal_scale in color_scale_dict.items():
+                baseline_color_scale[location] = decimal_to_rgb_gray(decimal_scale)
+            
         else:
             baseline_color_scale = None
         

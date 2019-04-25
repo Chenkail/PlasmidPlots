@@ -1,6 +1,9 @@
 from plasmidplots.ncbi_tools import *
 from imagemergetools.imagemergetools import *
 
+
+# -------- Begin functions -------- #
+
 def sequence_finder(dna_file, plasmid):
     """Finds corresponding DNA sequence in file given plasmid name"""
     
@@ -119,10 +122,12 @@ def gc_content_dict(dna_file, plasmid, window=100):
     gc_data_dict = {}
     for i in range(chunks):
         start = i*window
-        if i == chunks - 1 or i == chunks - 2:
+        
+        if i == chunks - 1:
             end = length
+        
         else:
-            end = (i+2) * window
+            end = (i+1) * window
         
         sequence_chunk = sequence[start:end]
         
@@ -134,13 +139,15 @@ def gc_content_dict(dna_file, plasmid, window=100):
     return gc_data_dict
 
 
-def gc_skew_dict(dna_file, plasmid, window):
+def gc_skew_dict(dna_file, plasmid, window=100):
     # Import libraries
     from Bio.SeqUtils import GC_skew
     import math
     
     # Pull DNA sequence into a string
     sequence = sequence_finder(dna_file, plasmid)
+    
+    length = len(sequence)
     
     # Get list of GC skew values
     skew_list = GC_skew(sequence, window)
@@ -150,14 +157,14 @@ def gc_skew_dict(dna_file, plasmid, window):
     gc_skew_dict = {}
     for i in range(chunks):
         start = i*window
-        if i == chunks - 1 or i == chunks - 2:
+        
+        if i == chunks - 1:
             end = length
+        
         else:
-            end = (i+2) * window
+            end = (i+1) * window
         
         sequence_chunk = sequence[start:end]
-        
-        gc_content = GC(sequence_chunk)/100
         
         key = str(start + 1) + "-" + str(end)
         skew = skew_list[i]
@@ -530,11 +537,38 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
                 color_scale_dict = gc_skew_dict(dna_file, plasmid)
             
             else:
+                color_scale_dict = None
+            
+            # If color scale exists, generate grayscale values
+            if color_scale_dict != None:
+                baseline_color_scale = {}
+                
+                plasmid_length = data[0]
+                first = True
+                
+                for location, decimal_scale in color_scale_dict.items():
+                    start, end = location.split('-')
+                    start = int(start)
+                    end = int(end)
+                    
+                    # Set window on first key/value pair
+                    if first:
+                        window = end - start + 1
+                        first = False
+                    
+                    # Increase width of gray bar to prevent artifacts
+                    if end + window < plasmid_length:
+                        end += window
+                    else:
+                        end = plasmid_length
+                    
+                    # Add data for gray bar to dictionary
+                    location = str(start) + '-' + str(end)
+                    baseline_color_scale[location] = decimal_to_rgb_gray(decimal_scale)
+            
+            else:
                 baseline_color_scale = None
             
-            baseline_color_scale = {}
-            for location, decimal_scale in color_scale_dict.items():
-                baseline_color_scale[location] = decimal_to_rgb_gray(decimal_scale)
             
         else:
             baseline_color_scale = None

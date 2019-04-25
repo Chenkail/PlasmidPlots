@@ -1,4 +1,5 @@
-import ncbi_tools
+from plasmidplots.ncbi_tools import *
+from imagemergetools.imagemergetools import *
 
 def sequence_finder(dna_file, plasmid):
     """Finds corresponding DNA sequence in file given plasmid name"""

@@ -555,13 +555,13 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
             linear_plot_list.append(image)
     
     # Combine circular plot images
-    circular_plots = pil_grid(circular_plot_list, circular_plot_columns)
+    circular_plots = image_grid(circular_plot_list, circular_plot_columns)
     circular_plot_file = strain + "_circular_plots.png"
     circular_plots.save(circular_plot_file)
     circular_plots.close()
     
     # Combine linear plot images
-    linear_plots = pil_grid(linear_plot_list, 1)
+    linear_plots = image_grid(linear_plot_list, 1)
     linear_plot_file = strain + "_linear_plots.png"
     linear_plots.save(linear_plot_file)
     linear_plots.close()

@@ -1,5 +1,5 @@
-from plasmidplots.ncbi_tools import *
-from imagemergetools.imagemergetools import *
+from plasmidplots import ncbi_tools as ncbi
+from imagemergetools import imagemergetools as imt
 
 
 # -------- Begin functions -------- #
@@ -587,24 +587,24 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
             linear_plot_list.append(image)
 
     # Combine circular plot images
-    circular_plots = image_grid(circular_plot_list, circular_plot_columns)
+    circular_plots = imt.image_grid(circular_plot_list, circular_plot_columns)
     circular_plot_file = strain + "_circular_plots.png"
     circular_plots.save(circular_plot_file)
     circular_plots.close()
 
     # Combine linear plot images
-    linear_plots = image_grid(linear_plot_list, 1)
+    linear_plots = imt.image_grid(linear_plot_list, 1)
     linear_plot_file = strain + "_linear_plots.png"
     linear_plots.save(linear_plot_file)
     linear_plots.close()
 
     for image in (circular_plot_file, linear_plot_file):
-        append_legend(image, legend, strain)
+        imt.append_legend(image, legend, strain)
 
         if border:
             # Add black border and then white buffer around it
-            add_border(image)
-            add_border(image, border_color='#FFFFFF', border_dimensions=(5, 5))
+            imt.add_border(image)
+            imt.add_border(image, border_color='#FFFFFF', border_dimensions=(5, 5))
 
     # Clean up temporary files
     temp_files = [temp_file,]
@@ -649,7 +649,7 @@ def main():
     TIME_STRING = " Time: %s seconds"
 
     # Get NCBI urls
-    url_list = url_input()
+    url_list = ncbi.url_input()
 
     # Take filepath input
     # Can just be file name if in content folder (e.g. foo.txt)
@@ -671,7 +671,7 @@ def main():
     start_time = timer()
 
     legend_image_file = 'legend.png'
-    generate_legend(sequence_color_dict, LEGEND_FONT_SIZE, legend_image_file)
+    imt.generate_legend(sequence_color_dict, LEGEND_FONT_SIZE, legend_image_file)
 
     end_time = timer()
     time = TIMER_FORMAT%(end_time - start_time)
@@ -680,7 +680,7 @@ def main():
     # Add all plasmid sequences from each url to replicons.txt
     start_time = timer()
 
-    ncbi_id_dict = ncbi_scrape(url_list)
+    ncbi_id_dict = ncbi.ncbi_scrape(url_list)
 
     end_time = timer()
     time = TIMER_FORMAT%(end_time - start_time)
@@ -688,7 +688,7 @@ def main():
 
     start_time = timer()
 
-    sequence_download(ncbi_id_dict)
+    ncbi.sequence_download(ncbi_id_dict)
 
     end_time = timer()
     time = TIMER_FORMAT%(end_time - start_time)
@@ -749,7 +749,7 @@ def main():
         image_list.append(circular)
         image_list.append(linear)
 
-    images_to_pdf(image_list, 'plots.pdf')
+    imt.images_to_pdf(image_list, 'plots.pdf')
     print("PDF generated.")
 
     end_time = timer()

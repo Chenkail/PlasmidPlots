@@ -177,7 +177,7 @@ def decimal_to_rgb_gray(decimal, minimum=0, maximum=255):
     return(hex_string)
 
 
-def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None):
+def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None, output_dir="./plasmidplots_temp/"):
     """Plots a linear plasmid given the plasmid name and data list"""
 
     # Set constants
@@ -265,11 +265,12 @@ def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None)
 
     # Hide background and save plot to image
     plt.axis('off')
-    plt.savefig('temp.png', bbox_inches='tight')
+    filename = output_dir + "temp.png"
+    plt.savefig(filename, bbox_inches='tight')
     plt.close('all')
 
 
-def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None):
+def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None, output_dir="./plasmidplots_temp/"):
     """Plots a circular plasmid given the name and the data list"""
 
     # Set constants
@@ -393,7 +394,8 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
 
     # Hide background and save plot to image
     plt.axis('off')
-    plt.savefig('temp.png', bbox_inches='tight')
+    filename = output_dir + "temp.png"
+    plt.savefig(filename, bbox_inches='tight')
     plt.close('all')
 
 
@@ -481,7 +483,7 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
 
     circular_plot_list = []
     linear_plot_list = []
-    temp_file = "plasmidplots_temp/temp.png"
+    temp_file = "./plasmidplots_temp/temp.png"
     plot_image_dir = "./plasmidplots_temp/plot_images/"
 
     if not os.path.exists(plot_image_dir):
@@ -625,7 +627,7 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file):
     # Generate legend for plots
     start_time = timer()
 
-    legend_image_file = temp_dir + 'legend.png'
+    legend_image_file = 'legend.png'
     imt.generate_legend(sequence_color_dict, LEGEND_FONT_SIZE, legend_image_file)
 
     end_time = timer()

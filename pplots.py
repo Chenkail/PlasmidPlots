@@ -405,8 +405,8 @@ def subgroup_search(sequence, family, subgroup_file_dict):
     short_sequence_file = "short_sequence.txt"
 
     # Create blank file
-    temp_subgroup_text_file = 'subgroup.txt'
-    open(temp_subgroup_text_file, 'w').close()
+    protein_matches_file = 'protein_matches.txt'
+    open(protein_matches_file, 'w').close()
 
     # Create text file using sequence
     with open(short_sequence_file, 'w') as ss_file:
@@ -414,10 +414,10 @@ def subgroup_search(sequence, family, subgroup_file_dict):
         ss_file.write(sequence)
 
     # Run FASTX using variables
-    fasta(short_sequence_file, subgroup_file, temp_subgroup_text_file)
+    fasta(short_sequence_file, subgroup_file, protein_matches_file)
 
     # Find subgroup in FASTA output
-    with open(temp_subgroup_text_file) as subgroup_text:
+    with open(protein_matches_file) as subgroup_text:
         first_line = subgroup_text.readline().strip()
         if "short_sequence" not in first_line:
             return ''
@@ -426,7 +426,7 @@ def subgroup_search(sequence, family, subgroup_file_dict):
 
     # Clean up temporary files
     temp_files = [short_sequence_file,
-                  temp_subgroup_text_file,]
+                  protein_matches_file,]
 
     for file in temp_files:
         if os.path.isfile(file):

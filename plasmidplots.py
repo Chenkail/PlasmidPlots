@@ -1,14 +1,21 @@
+# -------- Import libraries -------- #
+import math
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+import pexpect
+from Bio import SeqIO
+from Bio.SeqUtils import GC, GC_skew
+from itertools import islice
+from PIL import Image
+from timeit import default_timer as timer
 from plasmidplots import ncbi_tools as ncbi
 from imagemergetools import imagemergetools as imt
-
 
 # -------- Begin functions -------- #
 
 def sequence_finder(dna_file, plasmid):
     """Finds corresponding DNA sequence in file given plasmid name"""
-
-    # Import libraries
-    from itertools import islice
 
     # Variable setup
     line_number = 0
@@ -41,9 +48,6 @@ def fasta(dna_sequence_file, protein_input, output_file):
     a protein sequence (amino acid) file.
     """
 
-    # Import libraries
-    import pexpect
-
     # Download FASTA
     command = 'bash -c "if ! [ -e /content/fasta-36.3.8g/bin ]; then wget -q https://github.com/wrpearson/fasta36/releases/download/fasta-v36.3.8g/fasta-36.3.8g-linux64.tar.gz && tar -xzf fasta-36.3.8g-linux64.tar.gz; fi"'
     pexpect.run(command)
@@ -70,9 +74,6 @@ def read_colors(file):
     49:#00FF00
     50:#FFFF00
     """
-
-    # Import libraries
-    from itertools import islice
 
     color_dict = {}
     subgroup_dict = {}
@@ -109,10 +110,6 @@ def read_colors(file):
 def gc_content_dict(dna_file, plasmid, window=100):
     """Returns list of GC content percentages for each window"""
 
-    # Import libraries
-    from Bio.SeqUtils import GC
-    import math
-
     # Pull DNA sequence into a string
     sequence = sequence_finder(dna_file, plasmid)
 
@@ -140,9 +137,7 @@ def gc_content_dict(dna_file, plasmid, window=100):
 
 
 def gc_skew_dict(dna_file, plasmid, window=100):
-    # Import libraries
-    from Bio.SeqUtils import GC_skew
-    import math
+    """Returns dictionary of locations and GC skew given dna file, sequence name, and window size"""
 
     # Pull DNA sequence into a string
     sequence = sequence_finder(dna_file, plasmid)
@@ -192,9 +187,6 @@ def decimal_to_rgb_gray(decimal, minimum=0, maximum=255):
 
 def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None):
     """Plots a linear plasmid given the plasmid name and data list"""
-
-    # Import libraries
-    import matplotlib.pyplot as plt
 
     # Set constants
     HORIZONTAL_SCALE_CONSTANT = 3/4000
@@ -287,10 +279,6 @@ def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None)
 
 def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None):
     """Plots a circular plasmid given the name and the data list"""
-
-    # Import libraries
-    import matplotlib.pyplot as plt
-    import numpy as np
 
     # Set constants
     CHART_BOTTOM = 4
@@ -420,9 +408,6 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
 def subgroup_search(sequence, family, subgroup_dict):
     """Find best subgroup match given a short sequence and the family to search"""
 
-    # Import libraries
-    import os
-
     # Setup
     subgroup_file = subgroup_dict[family]
     short_sequence_file = "short_sequence.txt"
@@ -468,9 +453,6 @@ def short_protein_sequence_search(plasmid, start, end, dna_file):
 def file_to_dict(filename, dna_sequence_file, replen, subgroup_dict):
     """Converts FASTA output file to a dictionary for plotting"""
 
-    # Import libraries
-    from itertools import islice
-
     data_dict = {}
     line_number = 0
     plasmid_count = 0
@@ -512,10 +494,6 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
                  circular_plot_columns=5, legend='legend.png',
                  border=True, plot_baseline_color_scale=None, dna_file=None):
     """Loops over every key in dictionary and creates a plot for each, then generates images"""
-
-    # Import libraries
-    import os
-    from PIL import Image
 
     circular_plot_list = []
     linear_plot_list = []
@@ -638,11 +616,6 @@ def strain_sort(data_dict):
 # -------- Begin main program -------- #
 
 def main():
-    # Import libraries
-    from Bio import SeqIO
-    from timeit import default_timer as timer
-    import os
-
     # Set constants
     LEGEND_FONT_SIZE = 48
     TIMER_FORMAT = "%.1f"

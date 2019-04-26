@@ -57,7 +57,7 @@ def fasta(dna_sequence_file, protein_input, output_file):
     pexpect.run(command)
 
 
-def read_colors(file):
+def read_colors(color_file, subgroup_list_file=None):
     """
     Reads colors from a text file.
 
@@ -76,35 +76,26 @@ def read_colors(file):
     """
 
     color_dict = {}
-    subgroup_dict = {}
-
-    # Ask user if they would like to define subgroups, otherwise use default
-    define_subgroups = False
-    define_subgroups_input = input("Would you like to define subgroup files for each protein family? (y/n) ")
-    if 'y' in define_subgroups_input:
-        define_subgroups = True
+    subgroup_file_dict = {}
+    if subgroup_list_file != None:
+        with open(subgroup_list_file) as file:
+            for line in islice(color_file, None):
+                subgroup, subgroup_file = line.strip().split(":")
+                subgroup_file_dict[subgroup] = subgroup_file
     else:
-        subgroup_dict = {'32':'pf32.txt'}
+        subgroup_file_dict = {'32':'pf32.txt'}
 
-    with open(file) as color_file:
-        for line in islice(color_file, None):
+    with open(color_file) as file:
+        for line in islice(file, None):
             family, color = line.strip().split(":")
 
             # Add color to dictionary
             color_dict[family] = color
 
-            # Prompt user for file corresponding to protein family
-            if family not in subgroup_dict.keys():
-                subgroup_file_name = ''
-                if define_subgroups and family != 'Base Color':
-                    subgroup_file_name = input("Enter filepath for Family " + family + " protein sequences: ")
-
-                subgroup_dict[family] = subgroup_file_name
-
     if 'Base Color' not in color_dict.keys():
         color_dict['Base Color'] = '#C0C0C0'
 
-    return color_dict, subgroup_dict
+    return color_dict, subgroup_file_dict
 
 
 def gc_content_dict(dna_file, plasmid, window=100):
@@ -405,11 +396,11 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
     plt.close('all')
 
 
-def subgroup_search(sequence, family, subgroup_dict):
+def subgroup_search(sequence, family, subgroup_file_dict):
     """Find best subgroup match given a short sequence and the family to search"""
 
     # Setup
-    subgroup_file = subgroup_dict[family]
+    subgroup_file = subgroup_file_dict[family]
     short_sequence_file = "short_sequence.txt"
 
     # Create blank file
@@ -450,7 +441,7 @@ def short_protein_sequence_search(plasmid, start, end, dna_file):
     return trimmed_sequence
 
 
-def file_to_dict(filename, dna_sequence_file, replen, subgroup_dict):
+def file_to_dict(filename, dna_sequence_file, replen, subgroup_file_dict):
     """Converts FASTA output file to a dictionary for plotting"""
 
     data_dict = {}
@@ -472,9 +463,9 @@ def file_to_dict(filename, dna_sequence_file, replen, subgroup_dict):
             family = line.split()[1]
             start = min(int(line.split()[6]), int(line.split()[7]))
             end = max(int(line.split()[6]), int(line.split()[7]))
-            if family in subgroup_dict.keys():
+            if family in subgroup_file_dict.keys():
                 protein_sequence = short_protein_sequence_search(plasmid, start, end, dna_sequence_file)
-                subgroup = subgroup_search(protein_sequence, family, subgroup_dict)
+                subgroup = subgroup_search(protein_sequence, family, subgroup_file_dict)
             else:
                 subgroup = ''
             pf_tuple = (family, start, end, subgroup)
@@ -615,7 +606,7 @@ def strain_sort(data_dict):
 
 # -------- Begin main program -------- #
 
-def main():
+def main(url_input='', protein_input='', color_file=''):
     # Set constants
     LEGEND_FONT_SIZE = 48
     TIMER_FORMAT = "%.1f"
@@ -638,7 +629,7 @@ def main():
     program_start = timer()
 
     # Read data on colors and files for family subgroups
-    sequence_color_dict, subgroup_dict = read_colors(color_file)
+    sequence_color_dict, subgroup_file_dict = read_colors(color_file)
 
     # Generate legend for plots
     start_time = timer()
@@ -694,7 +685,7 @@ def main():
     # Create dictionary from FASTA output
     start_time = timer()
 
-    data_dict = file_to_dict(fasta_output, dna_sequence_file, replen, subgroup_dict)
+    data_dict = file_to_dict(fasta_output, dna_sequence_file, replen, subgroup_file_dict)
 
     end_time = timer()
     time = TIMER_FORMAT%(end_time - start_time)

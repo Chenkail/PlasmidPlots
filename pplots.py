@@ -50,11 +50,11 @@ def fasta(dna_sequence_file, protein_input, output_file):
     """
 
     # Download FASTA
-    command = 'bash -c "if ! [ -e /content/fasta-36.3.8g/bin ]; then wget -q https://github.com/wrpearson/fasta36/releases/download/fasta-v36.3.8g/fasta-36.3.8g-linux64.tar.gz && tar -xzf fasta-36.3.8g-linux64.tar.gz; fi"'
+    command = 'bash -c "if ! [ -e ./fasta-36.3.8g/bin ]; then wget -q https://github.com/wrpearson/fasta36/releases/download/fasta-v36.3.8g/fasta-36.3.8g-linux64.tar.gz && tar -xzf fasta-36.3.8g-linux64.tar.gz; fi"'
     pexpect.run(command)
 
     # Run FASTX using variables
-    command = 'bash -c ' + '"if [ \':$PATH:\' != *\':/content/fasta-36.3.8g/bin/fasta36:\'* ]; then PATH=\'$PATH:/content/fasta-36.3.8g/bin\'; fi && fastx36 -m 8 -E 0.05 ' + dna_sequence_file + ' ' + protein_input + ' > ' + output_file + '"'
+    command = 'bash -c ' + '"if [ \':$PATH:\' != *\':./fasta-36.3.8g/bin\'* ]; then PATH=\'./fasta-36.3.8g/bin\'; fi && fastx36 -m 8 -E 0.05 ' + dna_sequence_file + ' ' + protein_input + ' > ' + output_file + '"'
     pexpect.run(command)
 
 
@@ -743,8 +743,8 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file):
 
 # Run main
 if __name__ == "__main__":
-    url_input_file = sys.argv[0]
-    protein_input_file = sys.argv[1]
-    color_file = sys.argv[2]
-    subgroup_list_file = sys.argv[3]
+    url_input_file = sys.argv[1]
+    protein_input_file = sys.argv[2]
+    color_file = sys.argv[3]
+    subgroup_list_file = sys.argv[4]
     main(url_input_file, protein_input_file, color_file, subgroup_list_file)

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pexpect
+import sys
 from Bio import SeqIO
 from Bio.SeqUtils import GC, GC_skew
 from itertools import islice
@@ -606,23 +607,21 @@ def strain_sort(data_dict):
 
 # -------- Begin main program -------- #
 
-def main(url_input='', protein_input='', color_file=''):
+def main(url_input_file, protein_input, color_file, subgroup_list_file):
     # Set constants
     LEGEND_FONT_SIZE = 48
     TIMER_FORMAT = "%.1f"
     TIME_STRING = " Time: %s seconds"
 
     # Get NCBI urls
-    url_list = ncbi.url_input()
+    url_list = ncbi.url_input(url_input_file)
 
     # Take filepath input
     # Can just be file name if in content folder (e.g. foo.txt)
     dna_sequence_file = 'replicons.txt'
-    protein_input = input("Enter filepath for protein sequences: ").strip()
-    if protein_input == '':
+    if protein_input == None:
         protein_input = 'pfam.txt'
-    color_file = input("Enter filepath for colors: ").strip()
-    if color_file == '':
+    if color_file == None:
         color_file = 'colors.txt'
 
     # Start timer for entire program's run time
@@ -744,4 +743,8 @@ def main(url_input='', protein_input='', color_file=''):
 
 # Run main
 if __name__ == "__main__":
-    main()
+    url_input_file = sys.argv[0]
+    protein_input_file = sys.argv[1]
+    color_file = sys.argv[2]
+    subgroup_list_file = sys.argv[3]
+    main(url_input_file, protein_input_file, color_file, subgroup_list_file)

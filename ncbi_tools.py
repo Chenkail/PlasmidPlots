@@ -12,7 +12,7 @@ def url_input(input_file):
     url_count = 0
     with open(input_file) as url_file:
         for line in islice(url_file, None):
-            if line not in url_list:
+            if line not in url_list and line.strip() != '':
                 url_list.append(line)
                 url_count += 1
 
@@ -144,12 +144,14 @@ def sequence_download(id_dict):
     import pexpect
     import shutil
 
+    temp_dir = "./plasmidplots_temp/"
+
     # Name files
-    temp1 = 'temp1.txt'
-    temp2 = 'temp2.txt'
+    temp1 = temp_dir + 'temp1.txt'
+    temp2 = temp_dir + 'temp2.txt'
 
     # This will be the name of the output file
-    sequence_file = 'replicons.txt'
+    sequence_file = temp_dir + 'replicons.txt'
 
     # Delete old file if it exists
     if os.path.isfile(sequence_file):
@@ -175,11 +177,3 @@ def sequence_download(id_dict):
             with open(sequence_file, 'a') as out_file:
                 for line in in_file:
                     out_file.write(line)
-
-    # Clean up temporary files
-    temp_files = [temp1,
-                  temp2,]
-
-    for file in temp_files:
-        if os.path.isfile(file):
-            os.remove(file)

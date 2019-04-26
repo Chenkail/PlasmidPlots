@@ -402,10 +402,10 @@ def subgroup_search(sequence, family, subgroup_file_dict):
 
     # Setup
     subgroup_file = subgroup_file_dict[family]
-    short_sequence_file = "short_sequence.txt"
+    short_sequence_file = "plasmidplots_temp/short_sequence.txt"
 
     # Create blank file
-    protein_matches_file = 'protein_matches.txt'
+    protein_matches_file = 'plasmidplots_temp/protein_matches.txt'
     open(protein_matches_file, 'w').close()
 
     # Create text file using sequence
@@ -423,14 +423,6 @@ def subgroup_search(sequence, family, subgroup_file_dict):
             return ''
         subgroup = str(first_line.split()[1])
     return subgroup
-
-    # Clean up temporary files
-    temp_files = [short_sequence_file,
-                  protein_matches_file,]
-
-    for file in temp_files:
-        if os.path.isfile(file):
-            os.remove(file)
 
 
 def short_protein_sequence_search(plasmid, start, end, dna_file):
@@ -489,9 +481,11 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
 
     circular_plot_list = []
     linear_plot_list = []
-    temp_file = 'temp.png'
+    temp_file = "plasmidplots_temp/temp.png"
+    plot_image_dir = "./plasmidplots_temp/plot_images/"
 
-
+    if not os.path.exists(plot_image_dir):
+        os.makedirs(plot_image_dir)
 
     # Plot based on plasmid type and sort into two lists
     for plasmid, data in data_dict.items():
@@ -558,13 +552,13 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
 
     # Combine circular plot images
     circular_plots = imt.image_grid(circular_plot_list, circular_plot_columns)
-    circular_plot_file = strain + "_circular_plots.png"
+    circular_plot_file = plot_image_dir + strain + "_circular_plots.png"
     circular_plots.save(circular_plot_file)
     circular_plots.close()
 
     # Combine linear plot images
     linear_plots = imt.image_grid(linear_plot_list, 1)
-    linear_plot_file = strain + "_linear_plots.png"
+    linear_plot_file = plot_image_dir + strain + "_linear_plots.png"
     linear_plots.save(linear_plot_file)
     linear_plots.close()
 
@@ -575,13 +569,6 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
             # Add black border and then white buffer around it
             imt.add_border(image)
             imt.add_border(image, border_color='#FFFFFF', border_dimensions=(5, 5))
-
-    # Clean up temporary files
-    temp_files = [temp_file,]
-
-    for file in temp_files:
-        if os.path.isfile(file):
-            os.remove(file)
 
     # Return image file names
     return circular_plot_file, linear_plot_file
@@ -613,12 +600,17 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file):
     TIMER_FORMAT = "%.1f"
     TIME_STRING = " Time: %s seconds"
 
+    # Create folder for temporary files
+    temp_dir = "./plasmidplots_temp/"
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
+
     # Get NCBI urls
     url_list = ncbi.url_input(url_input_file)
 
     # Take filepath input
     # Can just be file name if in content folder (e.g. foo.txt)
-    dna_sequence_file = 'replicons.txt'
+    dna_sequence_file = temp_dir + 'replicons.txt'
     if protein_input == None:
         protein_input = 'pfam.txt'
     if color_file == None:
@@ -633,7 +625,7 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file):
     # Generate legend for plots
     start_time = timer()
 
-    legend_image_file = 'legend.png'
+    legend_image_file = temp_dir + 'legend.png'
     imt.generate_legend(sequence_color_dict, LEGEND_FONT_SIZE, legend_image_file)
 
     end_time = timer()
@@ -671,7 +663,7 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file):
     # Get sequence length of each record in "replicons.txt"
     start_time = timer()
 
-    sequence_file = 'replicons.txt'
+    sequence_file = temp_dir + 'replicons.txt'
     replen = {}
     with open(sequence_file, 'r') as fna:
         for rec in SeqIO.parse(fna, 'fasta'):
@@ -722,13 +714,7 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file):
     # Clean up temporary files
     start_time = timer()
 
-    temp_files = []
-    # temp_files = image_list # Comment out line to keep individual image files
-    temp_files.append(fasta_output)
-
-    for file in temp_files:
-        if os.path.isfile(file):
-            os.remove(file)
+    #TODO
 
     end_time = timer()
     time = TIMER_FORMAT%(end_time - start_time)

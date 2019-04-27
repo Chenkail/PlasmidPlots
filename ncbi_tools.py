@@ -1,12 +1,17 @@
+# Import libraries
+import os
+import pexpect
+import shutil
+import urllib
+from bs4 import BeautifulSoup
+from itertools import islice
+
 def url_input(input_file):
     """
     Takes urls and returns a list
 
     The urls can be input directly, or in the form of a text file with each url on a separate line.
     """
-
-    # Import libraries
-    from itertools import islice
 
     url_list = []
     url_count = 0
@@ -24,10 +29,6 @@ def strain_name_scrape(url):
     """
     Scrapes NCBI for name of a strain given its url
     """
-
-    # Import libraries
-    import urllib
-    from bs4 import BeautifulSoup
 
     # Get html
     html = urllib.request.urlopen(url)
@@ -83,11 +84,6 @@ def ncbi_scrape(url_list):
     Enter a blank line to stop input.
     """
 
-    # Import libraries
-    import urllib
-    from bs4 import BeautifulSoup
-
-
     # Loop over each url in the list and add data to dictionary
     ncbi_dict = {}
     for url in url_list:
@@ -138,11 +134,6 @@ def ncbi_scrape(url_list):
 
 def sequence_download(id_dict):
     """Downloads sequences given a dictionary of names and IDs"""
-
-    # Import libraries
-    import os
-    import pexpect
-    import shutil
 
     temp_dir = "./plasmidplots_temp/"
 

@@ -627,7 +627,7 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file):
     # Generate legend for plots
     start_time = timer()
 
-    legend_image_file = 'legend.png'
+    legend_image_file = temp_dir + 'legend.png'
     imt.generate_legend(sequence_color_dict, LEGEND_FONT_SIZE, legend_image_file)
 
     end_time = timer()
@@ -700,7 +700,7 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file):
     for strain, data in sorted_dict.items():
         circular, linear = dict_to_plot(strain, data, sequence_color_dict, 5,
                                         border=True, plot_baseline_color_scale='gc content',
-                                        dna_file=dna_sequence_file)
+                                        dna_file=dna_sequence_file, legend=legend_image_file)
         print("Strain plotted: " + strain)
 
         image_list.append(circular)

@@ -1,9 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Plots sequences corresponding to protein families on plasmids"""
+
 # -------- Import libraries -------- #
 import math
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import pexpect
 import sys
 from Bio import SeqIO
 from Bio.SeqUtils import GC, GC_skew
@@ -11,52 +14,10 @@ from itertools import islice
 from PIL import Image
 from timeit import default_timer as timer
 from plasmidplots import ncbi_tools as ncbi
+from plasmidplots import utilities as pputil
 from imagemergetools import imagemergetools as imt
 
 # -------- Begin functions -------- #
-
-def sequence_finder(dna_file, plasmid):
-    """Finds corresponding DNA sequence in file given plasmid name"""
-
-    # Variable setup
-    line_number = 0
-    sequence = ''
-    recording = False
-
-    with open(dna_file) as dna_input:
-        # Move to line identifying the plasmid being searched for
-        for line in islice(dna_input, None):
-            line_number += 1
-            if recording:
-                if '>' not in line:
-                    sequence += line.strip()
-                else:
-                    break
-
-            if plasmid in line:
-                recording = True
-
-    sequence = sequence.strip().replace(" ", "")
-
-    return sequence
-
-
-def fasta(dna_sequence_file, protein_input, output_file):
-    """
-    Runs FASTA given two filepaths and the name of the file to output to.
-
-    The first should be a DNA sequence file, and the second should be
-    a protein sequence (amino acid) file.
-    """
-
-    # Download FASTA
-    command = 'bash -c "if ! [ -e ./fasta-36.3.8g/bin ]; then wget -q https://github.com/wrpearson/fasta36/releases/download/fasta-v36.3.8g/fasta-36.3.8g-linux64.tar.gz && tar -xzf fasta-36.3.8g-linux64.tar.gz; fi"'
-    pexpect.run(command)
-
-    # Run FASTX using variables
-    command = 'bash -c ' + '"if [ \':$PATH:\' != *\':./fasta-36.3.8g/bin\'* ]; then PATH=\'./fasta-36.3.8g/bin\'; fi && fastx36 -m 8 -E 0.05 ' + dna_sequence_file + ' ' + protein_input + ' > ' + output_file + '"'
-    pexpect.run(command)
-
 
 def read_colors(color_file, subgroup_list_file=None):
     """
@@ -103,7 +64,7 @@ def gc_content_dict(dna_file, plasmid, window=100):
     """Returns list of GC content percentages for each window"""
 
     # Pull DNA sequence into a string
-    sequence = sequence_finder(dna_file, plasmid)
+    sequence = pputil.sequence_finder(dna_file, plasmid)
 
     length = len(sequence)
     chunks = math.ceil(length/window)
@@ -132,7 +93,7 @@ def gc_skew_dict(dna_file, plasmid, window=100):
     """Returns dictionary of locations and GC skew given dna file, sequence name, and window size"""
 
     # Pull DNA sequence into a string
-    sequence = sequence_finder(dna_file, plasmid)
+    sequence = pputil.sequence_finder(dna_file, plasmid)
 
     length = len(sequence)
 
@@ -156,25 +117,6 @@ def gc_skew_dict(dna_file, plasmid, window=100):
         gc_skew_dict[key] = skew
 
     return gc_skew_dict
-
-
-def decimal_to_rgb_gray(decimal, minimum=0, maximum=255):
-    """Converts a decimal value (0-1) to a hex RGB grayscale value between a max and min (default is 0-255)"""
-
-    # Calculate the hex value of the decimal
-    scale = maximum - minimum
-    temp_string = hex(int(decimal*scale + minimum))
-
-    # Remove the 0x from the start of the string
-    hex_scale = temp_string.split('x')[1]
-
-    # Test if hex_scale is a single digit
-    if len(hex_scale) == 1:
-        hex_scale = '0' + hex_scale
-
-    # Repeat the string three times and add a # to the start
-    hex_string = '#' + hex_scale*3
-    return(hex_string)
 
 
 def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None, output_dir="./plasmidplots_temp/"):
@@ -416,7 +358,7 @@ def subgroup_search(sequence, family, subgroup_file_dict):
         ss_file.write(sequence)
 
     # Run FASTX using variables
-    fasta(short_sequence_file, subgroup_file, protein_matches_file)
+    pputil.fasta(short_sequence_file, subgroup_file, protein_matches_file)
 
     # Find subgroup in FASTA output
     with open(protein_matches_file) as subgroup_text:
@@ -431,7 +373,7 @@ def short_protein_sequence_search(plasmid, start, end, dna_file):
     """Returns trimmed sequence string given the plasmid name to cut and starting/ending locations"""
 
     # Return sliced portion of sequence
-    untrimmed_sequence = sequence_finder(dna_file, plasmid)
+    untrimmed_sequence = pputil.sequence_finder(dna_file, plasmid)
     trimmed_sequence = untrimmed_sequence[start:end - 1]
     return trimmed_sequence
 
@@ -528,7 +470,7 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
 
                     # Add data for gray bar to dictionary
                     location = str(start) + '-' + str(end)
-                    baseline_color_scale[location] = decimal_to_rgb_gray(decimal_scale)
+                    baseline_color_scale[location] = pputil.decimal_to_rgb_gray(decimal_scale)
 
             else:
                 baseline_color_scale = None
@@ -655,7 +597,7 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file):
     start_time = timer()
 
     fasta_output = 'output.txt'
-    fasta(dna_sequence_file, protein_input, fasta_output)
+    pputil.fasta(dna_sequence_file, protein_input, fasta_output)
 
     end_time = timer()
     time = TIMER_FORMAT%(end_time - start_time)

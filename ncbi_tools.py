@@ -1,3 +1,5 @@
+"""Tools for plasmidplots"""
+
 # Import libraries
 import os
 import pexpect

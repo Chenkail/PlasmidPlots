@@ -3,11 +3,11 @@
 """Plots sequences corresponding to protein families on plasmids"""
 
 # -------- Import libraries -------- #
+import argparse
 import math
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import sys
 from Bio import SeqIO
 from Bio.SeqUtils import GC, GC_skew
 from itertools import islice
@@ -436,10 +436,10 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
 
         if dna_file != None and plot_baseline_color_scale != None:
             # Set color scale for plot baselines
-            if plot_baseline_color_scale == 'gc content':
+            if plot_baseline_color_scale == 'gc':
                 color_scale_dict = gc_content_dict(dna_file, plasmid)
 
-            elif plot_baseline_color_scale == 'gc skew':
+            elif plot_baseline_color_scale == 'gcskew':
                 color_scale_dict = gc_skew_dict(dna_file, plasmid)
 
             else:
@@ -538,7 +538,7 @@ def strain_sort(data_dict):
 
 # -------- Begin main program -------- #
 
-def main(url_input_file, protein_input, color_file, subgroup_list_file):
+def main(url_input_file, protein_input, color_file, subgroup_list_file, baseline_scale):
     # Set constants
     LEGEND_FONT_SIZE = 48
     TIMER_FORMAT = "%.1f"
@@ -641,7 +641,7 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file):
     image_list = []
     for strain, data in sorted_dict.items():
         circular, linear = dict_to_plot(strain, data, sequence_color_dict, 5,
-                                        border=True, plot_baseline_color_scale='gc content',
+                                        border=True, plot_baseline_color_scale=baseline_scale,
                                         dna_file=dna_sequence_file, legend=legend_image_file)
         print("Strain plotted: " + strain)
 
@@ -673,8 +673,20 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file):
 
 # Run main
 if __name__ == "__main__":
-    url_input_file = sys.argv[1]
-    protein_input_file = sys.argv[2]
-    color_file = sys.argv[3]
-    subgroup_list_file = sys.argv[4]
-    main(url_input_file, protein_input_file, color_file, subgroup_list_file)
+    parser = argparse.ArgumentParser(description='Plots plasmids')
+    parser.add_argument("urls", help="")
+    parser.add_argument("protein", help="")
+    parser.add_argument("colors", help="")
+    parser.add_argument("subgroups", help="")
+    parser.add_argument("--baseline", type=str, choices=["gc", "gcskew"],
+                    help="data to be used for baseline color scale")
+
+    args = parser.parse_args()
+
+    url_input_file = args.urls
+    protein_input_file = args.protein
+    color_file = args.colors
+    subgroup_list_file = args.subgroups
+    baseline_scale = args.baseline
+
+    main(url_input_file, protein_input_file, color_file, subgroup_list_file, baseline_scale)

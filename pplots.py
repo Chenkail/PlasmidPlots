@@ -674,12 +674,12 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file, baseline
 # Run main
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Plots plasmids')
-    parser.add_argument("urls", help="")
-    parser.add_argument("protein", help="")
-    parser.add_argument("colors", help="")
-    parser.add_argument("subgroups", help="")
-    parser.add_argument("--baseline", type=str, choices=["gc", "gcskew"],
-                    help="data to be used for baseline color scale")
+    parser.add_argument("urls", help="Text file with NCBI urls to download plasmids from")
+    parser.add_argument("protein", help="FASTA file with sequences of protein families to search for")
+    parser.add_argument("colors", help="Text file with protein families and hex value colors")
+    parser.add_argument("subgroups", help="Text file with protein families and names of text files with subfamily sequences")
+    parser.add_argument("-b", "--baseline", type=str, choices=["gc", "gcskew"],
+                    help="Data to be used for baseline color scale")
 
     args = parser.parse_args()
 

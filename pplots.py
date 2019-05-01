@@ -470,7 +470,7 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
 
                     # Add data for gray bar to dictionary
                     location = str(start) + '-' + str(end)
-                    baseline_color_scale[location] = pputil.decimal_to_rgb_gray(decimal_scale)
+                    baseline_color_scale[location] = pputil.decimal_to_rgb_gray(decimal_scale, minimum=64)
 
             else:
                 baseline_color_scale = None

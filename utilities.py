@@ -5,17 +5,23 @@ import pexpect
 from itertools import islice
 
 def decimal_to_rgb_gray(decimal, minimum=0, maximum=255):
-    """Converts a decimal value (0-1) to a hex RGB grayscale value between a max and min (default is 0-255)"""
+    """
+    Converts a decimal value (0-1) to a hex RGB grayscale value
+    between a max and min (default is 0-255)
+
+    Lower value means lighter shades
+    """
 
     # Calculate the hex value of the decimal
     scale = maximum - minimum
-    temp_string = hex(int(decimal*scale + minimum))
+    value = decimal*scale + minimum
+    temp_string = hex(int(maximum - value))
 
     # Remove the 0x from the start of the string
     hex_scale = temp_string.split('x')[1]
 
     # Test if hex_scale is a single digit
-    if len(hex_scale) == 1:
+    while len(hex_scale) < 2:
         hex_scale = '0' + hex_scale
 
     # Repeat the string three times and add a # to the start

@@ -4,23 +4,41 @@
 import pexpect
 from itertools import islice
 
-def decimal_to_rgb_gray(decimal, minimum=0, maximum=255):
+def decimal_to_rgb_gray(decimal, darkest=0, lightest=255, reverse=False, lower=0, upper=1):
     """
-    Converts a decimal value (0-1) to a hex RGB grayscale value
-    between a max and min (default is 0-255)
+    Converts a decimal value to a hex RGB grayscale value
+    between a max and min shade (default is 0-255).
 
-    Lower value means lighter shades
+    By default, lower values mean lighter shades of gray.
+    The function will return a value based on the location of the input
+    between the given lower and upper values for input
+    (by default 0 and 1, respectively)
     """
+
+    # Test for input outside of min/max bounds
+    if decimal < lower or decimal > upper:
+        return "#FFFFFF"
 
     # Calculate the hex value of the decimal
-    scale = maximum - minimum
-    value = decimal*scale + minimum
-    temp_string = hex(int(maximum - value))
+    # Calculate percentagewise where the input is between the min and max
+    scale = upper - lower
+    percent = (decimal - lower)/scale
 
-    # Remove the 0x from the start of the string
+    # If scale is not reversed, flip so that the highest decimal
+    # value corresponds with the darkest shade
+    if reverse == False:
+        percent = 1 - percent
+
+    # Use percentage and apply to location between darkest and lightest shades of gray
+    shade_scale = lightest - darkest
+    value = percent*shade_scale + darkest
+
+    temp_string = hex(int(value))
+
+    # Remove "0x" from the start of the string
     hex_scale = temp_string.split('x')[1]
 
-    # Test if hex_scale is a single digit
+    # Pad hex_scale to length 2
     while len(hex_scale) < 2:
         hex_scale = '0' + hex_scale
 

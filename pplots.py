@@ -452,6 +452,19 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
                 plasmid_length = data[0]
                 first = True
 
+                # Find minimum and maximum values on decimal scale
+                scale_min = 0
+                scale_max = 0
+                first_scale = True
+                for decimal_scale in color_scale_dict.values():
+                    if first_scale:
+                        scale_min = decimal_scale
+                        scale_max = decimal_scale
+                        first_scale = False
+                    else:
+                        scale_min = min(scale_min, decimal_scale)
+                        scale_max = max(scale_max, decimal_scale)
+
                 for location, decimal_scale in color_scale_dict.items():
                     start, end = location.split('-')
                     start = int(start)
@@ -470,7 +483,7 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
 
                     # Add data for gray bar to dictionary
                     location = str(start) + '-' + str(end)
-                    baseline_color_scale[location] = pputil.decimal_to_rgb_gray(decimal_scale, minimum=64)
+                    baseline_color_scale[location] = pputil.decimal_to_rgb_gray(decimal_scale, lower=scale_min, upper=scale_max)
 
             else:
                 baseline_color_scale = None

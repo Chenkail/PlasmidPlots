@@ -4,7 +4,7 @@
 import pexpect
 from itertools import islice
 
-def decimal_to_rgb_gray(decimal, darkest=0, lightest=255, reverse=False, lower=0, upper=1):
+def grayscale(decimal, darkest=0, lightest=255, reverse=False, lower=0, upper=1):
     """
     Converts a decimal value to a hex RGB grayscale value
     between a max and min shade (default is 0-255).

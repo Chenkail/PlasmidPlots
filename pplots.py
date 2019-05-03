@@ -23,9 +23,8 @@ from plasmidplots import utilities as pputil
 
 # -------- Authorship -------- #
 __author__ = "Chenkai Luo and Chris Lausted"
-__credits__ = ["Chenkai Luo", "Chris Lausted"]
 __license__ = "GPLv3"
-__version__ = "1.5.3"
+__version__ = "1.5.5"
 
 # -------- Begin functions -------- #
 
@@ -753,10 +752,12 @@ if __name__ == "__main__":
     parser.add_argument("subgroups", 
                         help="Text file with protein families \
                         and names of text files with subfamily sequences")
+    parser.add_argument('-v', '--version', action='version', 
+                        version='%(prog)s ' + __version__)    
     parser.add_argument("-b", "--baseline", type=str, 
                         choices=["gc", "gcskew"], 
                         help="Data to be used for baseline color scale")
-
+    
     args = parser.parse_args()
 
     url_input_file = args.urls

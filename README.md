@@ -1,5 +1,5 @@
 # PlasmidPlots
-Borrelia burgdorferi, the bacteria responsible for Lyme disease, contains a large number of plasmids in its genome. These plasmids frequently contain copies of various paralogous gene families. In *A bacterial genome in flux: the twelve linear and nine circular extrachromosomal DNAs in an infectious isolate of the Lyme disease spirochete Borrelia burgdorferi* [(full paper here)](https://onlinelibrary.wiley.com/doi/full/10.1046/j.1365-2958.2000.01698.x), Casjens et al. plot these genes on the strain B31 (Figure 8 in the paper).
+Borrelia burgdorferi, the bacteria responsible for Lyme disease, contains a large number of plasmids in its genome. These plasmids frequently contain copies of various paralogous gene families. In *A bacterial genome in flux: the twelve linear and nine circular extrachromosomal DNAs in an infectious isolate of the Lyme disease spirochete Borrelia burgdorferi* [(full paper here)](https://onlinelibrary.wiley.com/doi/full/10.1046/j.1365-2958.2000.01698.x), Casjens et al. plot these genes on the strain B31 as seen below (Figure 8 in the paper):
 
 ![](https://wol-prod-cdn.literatumonline.com/cms/attachment/ca139954-6948-4d91-a567-c720e741c7f6/mmi_1698_f8.gif)
 

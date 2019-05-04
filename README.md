@@ -22,3 +22,4 @@ The program requires several text files to run, and a folder of example files ca
 ```
 python3 -m plasmidplots.pplots borrelia_urls.txt pfam.txt colors.txt subgroups.txt
 ```
+To add GC content or GC skew to the plots, add `--baseline gc` or `--baseline gcskew`, respectively.

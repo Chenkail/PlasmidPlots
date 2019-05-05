@@ -15,7 +15,9 @@ This program generates similar plots for any strain of any bacteria and any prot
  - PIL
 
 ### Pip
+```
 pip3 install plasmidplots
+```
 
 ## Running
 The program requires several text files to run, and a folder of example files can be found [here](https://drive.google.com/open?id=1oZpTRwPDGC5YsEs74oZMlLodlZzwWHXg). To run the program, open bash, navigate to the folder containing the files, and run the following command (this will take several minutes, depending on your computer):

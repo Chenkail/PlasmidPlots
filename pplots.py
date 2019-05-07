@@ -3,19 +3,28 @@
 """Plots sequences corresponding to protein families on plasmids"""
 
 # -------- Import libraries -------- #
+# Built-in
 import argparse
 import math
-import matplotlib.pyplot as plt
-import numpy as np
 import os
+from itertools import islice
+from timeit import default_timer as timer
+
+# 3rd party
 from Bio import SeqIO
 from Bio.SeqUtils import GC, GC_skew
-from itertools import islice
+from imagemergetools import imagemergetools as imt
 from PIL import Image
-from timeit import default_timer as timer
+import matplotlib.pyplot as plt
+import numpy as np
 from plasmidplots import ncbi_tools as ncbi
 from plasmidplots import utilities as pputil
-from imagemergetools import imagemergetools as imt
+
+
+# -------- Authorship -------- #
+__author__ = "Chenkai Luo and Chris Lausted"
+__license__ = "GPLv3"
+__version__ = "1.5.5"
 
 # -------- Begin functions -------- #
 
@@ -90,7 +99,11 @@ def gc_content_dict(dna_file, plasmid, window=100):
 
 
 def gc_skew_dict(dna_file, plasmid, window=100):
-    """Returns dictionary of locations and GC skew given dna file, sequence name, and window size"""
+    """
+    Returns dictionary of locations and GC skew
+    
+    Takes dna file, sequence name, and (optionally) window size as arguments
+    """
 
     # Pull DNA sequence into a string
     sequence = pputil.sequence_finder(dna_file, plasmid)
@@ -119,7 +132,9 @@ def gc_skew_dict(dna_file, plasmid, window=100):
     return gc_skew_dict
 
 
-def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None, output_dir="./plasmidplots_temp/"):
+def linear_plot(plasmid, data, sequence_color_dict, 
+                baseline_custom_colors=None, 
+                output_dir="./plasmidplots_temp/"):
     """Plots a linear plasmid given the plasmid name and data list"""
 
     # Set constants
@@ -152,10 +167,12 @@ def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None,
             first_base = int(location.split('-')[0])
             last_base = int(location.split('-')[1])
             length = last_base - first_base
-            baseline = linear.barh(0, length, left=first_base, height=1, color=color)
+            baseline = linear.barh(0, length, left=first_base, 
+                                   height=1, color=color)
 
     else:
-        baseline = linear.barh(0, plasmid_length, height=1, color=sequence_color_dict['Base Color'])
+        baseline = linear.barh(0, plasmid_length, height=1, 
+                               color=sequence_color_dict['Base Color'])
 
     for index in range(1, data_count):
         sequence = data[index]
@@ -185,7 +202,8 @@ def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None,
                             va='center',
                             fontsize=9,
                             rotation=90,
-                            arrowprops=dict(facecolor='black', arrowstyle='-',))
+                            arrowprops=dict(facecolor='black', 
+                                            arrowstyle='-',))
 
     # Add plot labels
     label_y = LABEL_Y_ADJUST
@@ -212,7 +230,9 @@ def linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None,
     plt.close('all')
 
 
-def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=None, output_dir="./plasmidplots_temp/"):
+def circular_plot(plasmid, data, sequence_color_dict, 
+                  baseline_custom_colors=None, 
+                  output_dir="./plasmidplots_temp/"):
     """Plots a circular plasmid given the name and the data list"""
 
     # Set constants
@@ -235,7 +255,8 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
 
     circle = plt.subplot(111, polar=True)
 
-    # Use data from first protein family sequence for initial minimum/maximum values
+    # Use data from first protein family sequence
+    # for initial minimum/maximum values
     first_data_point = data[1]
     minimum = min(first_data_point[1], first_data_point[2])
     maximum = max(first_data_point[1], first_data_point[2])
@@ -322,7 +343,8 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
                             va='center',
                             fontsize=12,
                             rotation=label_angle,
-                            arrowprops=dict(facecolor='black', arrowstyle='-',),)
+                            arrowprops=dict(facecolor='black', 
+                                            arrowstyle='-',),)
 
     # Label - plasmid name and length
     label_x = 0.5
@@ -331,8 +353,11 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
     else:
         label_y = -0.25
 
-    label_text = str(sequence_name) + "\n" + str(plasmid_length) + " base pairs"
-    plt.text(label_x, label_y, label_text, fontsize=24, ha='center', transform=circle.transAxes)
+    label_text = (str(sequence_name) + "\n" 
+                    + str(plasmid_length) + " base pairs")
+    
+    plt.text(label_x, label_y, label_text, fontsize=24, ha='center', 
+             transform=circle.transAxes)
 
     # Hide background and save plot to image
     plt.axis('off')
@@ -342,7 +367,11 @@ def circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=Non
 
 
 def subgroup_search(sequence, family, subgroup_file_dict):
-    """Find best subgroup match given a short sequence and the family to search"""
+    """
+    Find best subgroup match using FASTA
+    
+    Takes a sequence string and the protein family to search
+    """
 
     # Setup
     subgroup_file = subgroup_file_dict[family]
@@ -369,8 +398,13 @@ def subgroup_search(sequence, family, subgroup_file_dict):
     return subgroup
 
 
-def short_protein_sequence_search(plasmid, start, end, dna_file):
-    """Returns trimmed sequence string given the plasmid name to cut and starting/ending locations"""
+def sequence_trim(plasmid, start, end, dna_file):
+    """
+    Returns trimmed sequence string from a plasmid
+    
+    Takes plasmid name and file to search through, 
+    along with starting/ending locations
+    """
 
     # Return sliced portion of sequence
     untrimmed_sequence = pputil.sequence_finder(dna_file, plasmid)
@@ -401,8 +435,10 @@ def file_to_dict(filename, dna_sequence_file, replen, subgroup_file_dict):
             start = min(int(line.split()[6]), int(line.split()[7]))
             end = max(int(line.split()[6]), int(line.split()[7]))
             if family in subgroup_file_dict.keys():
-                protein_sequence = short_protein_sequence_search(plasmid, start, end, dna_sequence_file)
-                subgroup = subgroup_search(protein_sequence, family, subgroup_file_dict)
+                protein_sequence = (sequence_trim(plasmid, start, 
+                                                  end, dna_sequence_file))
+                subgroup = subgroup_search(protein_sequence, family, 
+                                           subgroup_file_dict)
             else:
                 subgroup = ''
             pf_tuple = (family, start, end, subgroup)
@@ -420,8 +456,8 @@ def file_to_dict(filename, dna_sequence_file, replen, subgroup_file_dict):
 
 def dict_to_plot(strain, data_dict, sequence_color_dict,
                  circular_plot_columns=5, legend='legend.png',
-                 border=True, plot_baseline_color_scale=None, dna_file=None):
-    """Loops over every key in dictionary and creates a plot for each, then generates images"""
+                 border=True, baseline_colors=None, dna_file=None):
+    """Creates a plot for each key in dictionary and generates images"""
 
     circular_plot_list = []
     linear_plot_list = []
@@ -434,12 +470,12 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
     # Plot based on plasmid type and sort into two lists
     for plasmid, data in data_dict.items():
 
-        if dna_file != None and plot_baseline_color_scale != None:
+        if dna_file != None and baseline_colors != None:
             # Set color scale for plot baselines
-            if plot_baseline_color_scale == 'gc':
+            if baseline_colors == 'gc':
                 color_scale_dict = gc_content_dict(dna_file, plasmid)
 
-            elif plot_baseline_color_scale == 'gcskew':
+            elif baseline_colors == 'gcskew':
                 color_scale_dict = gc_skew_dict(dna_file, plasmid)
 
             else:
@@ -483,7 +519,9 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
 
                     # Add data for gray bar to dictionary
                     location = str(start) + '-' + str(end)
-                    baseline_color_scale[location] = pputil.decimal_to_rgb_gray(decimal_scale, lower=scale_min, upper=scale_max)
+                    baseline_color_scale[location] = pputil.decimal_to_rgb_gray(decimal_scale, 
+                                                 lower=scale_min, 
+                                                 upper=scale_max)
 
             else:
                 baseline_color_scale = None
@@ -495,14 +533,16 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
 
         if 'cp' in plasmid.split('_')[1]:
             # Plot
-            circular_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=baseline_color_scale)
+            circular_plot(plasmid, data, sequence_color_dict, 
+                          baseline_custom_colors=baseline_color_scale)
             image = Image.open(temp_file)
             image.load()
             circular_plot_list.append(image)
 
         else:
             # Plot
-            linear_plot(plasmid, data, sequence_color_dict, baseline_custom_colors=baseline_color_scale)
+            linear_plot(plasmid, data, sequence_color_dict, 
+                        baseline_custom_colors=baseline_color_scale)
             image = Image.open(temp_file)
             image.load()
             linear_plot_list.append(image)
@@ -525,14 +565,21 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
         if border:
             # Add black border and then white buffer around it
             imt.add_border(image)
-            imt.add_border(image, border_color='#FFFFFF', border_dimensions=(5, 5))
+            imt.add_border(image, border_color='#FFFFFF', 
+                           border_dimensions=(5, 5))
 
     # Return image file names
     return circular_plot_file, linear_plot_file
 
 
 def strain_sort(data_dict):
-    """Returns a dictionary where the keys are the strains and the values are plasmid dictionaries"""
+    """
+    Sorts a dictionary by strain    
+    
+    The input dictionary should consist of plasmid keys and data for values
+    The sorted dictionary with have strains for the keys and plasmid/data
+    dictionaries as the values.
+    """
 
     # Separate plasmids into groups
     strain_dict = {}
@@ -551,7 +598,8 @@ def strain_sort(data_dict):
 
 # -------- Begin main program -------- #
 
-def main(url_input_file, protein_input, color_file, subgroup_list_file, baseline_scale):
+def main(url_input_file, protein_input, color_file, 
+         subgroup_list_file, baseline_scale):
     # Set constants
     LEGEND_FONT_SIZE = 48
     TIMER_FORMAT = "%.1f"
@@ -583,7 +631,9 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file, baseline
     start_time = timer()
 
     legend_image_file = temp_dir + 'legend.png'
-    imt.generate_legend(sequence_color_dict, LEGEND_FONT_SIZE, legend_image_file)
+    imt.generate_legend(sequence_color_dict, 
+                        LEGEND_FONT_SIZE, 
+                        legend_image_file)
 
     end_time = timer()
     time = TIMER_FORMAT%(end_time - start_time)
@@ -633,7 +683,8 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file, baseline
     # Create dictionary from FASTA output
     start_time = timer()
 
-    data_dict = file_to_dict(fasta_output, dna_sequence_file, replen, subgroup_file_dict)
+    data_dict = file_to_dict(fasta_output, dna_sequence_file, 
+                             replen, subgroup_file_dict)
 
     end_time = timer()
     time = TIMER_FORMAT%(end_time - start_time)
@@ -653,9 +704,11 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file, baseline
 
     image_list = []
     for strain, data in sorted_dict.items():
-        circular, linear = dict_to_plot(strain, data, sequence_color_dict, 5,
-                                        border=True, plot_baseline_color_scale=baseline_scale,
-                                        dna_file=dna_sequence_file, legend=legend_image_file)
+        circular, linear = dict_to_plot(strain, data, sequence_color_dict, 
+                                        5, border=True, 
+                                        baseline_colors=baseline_scale, 
+                                        dna_file=dna_sequence_file, 
+                                        legend=legend_image_file)
         print("Strain plotted: " + strain)
 
         image_list.append(circular)
@@ -684,16 +737,27 @@ def main(url_input_file, protein_input, color_file, subgroup_list_file, baseline
     print("Program run complete." + TIME_STRING%time)
 
 
-# Run main
+# -------- Run -------- #
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Plots plasmids')
-    parser.add_argument("urls", help="Text file with NCBI urls to download plasmids from")
-    parser.add_argument("protein", help="FASTA file with sequences of protein families to search for")
-    parser.add_argument("colors", help="Text file with protein families and hex value colors")
-    parser.add_argument("subgroups", help="Text file with protein families and names of text files with subfamily sequences")
-    parser.add_argument("-b", "--baseline", type=str, choices=["gc", "gcskew"],
-                    help="Data to be used for baseline color scale")
-
+    parser.add_argument("urls", 
+                        help="Text file with NCBI urls \
+                        to download plasmids from")
+    parser.add_argument("protein", 
+                        help="FASTA file with sequences of \
+                        protein families to search for")
+    parser.add_argument("colors", 
+                        help="Text file with protein families \
+                        and hex value colors")
+    parser.add_argument("subgroups", 
+                        help="Text file with protein families \
+                        and names of text files with subfamily sequences")
+    parser.add_argument('-v', '--version', action='version', 
+                        version='%(prog)s ' + __version__)    
+    parser.add_argument("-b", "--baseline", type=str, 
+                        choices=["gc", "gcskew"], 
+                        help="Data to be used for baseline color scale")
+    
     args = parser.parse_args()
 
     url_input_file = args.urls
@@ -702,4 +766,5 @@ if __name__ == "__main__":
     subgroup_list_file = args.subgroups
     baseline_scale = args.baseline
 
-    main(url_input_file, protein_input_file, color_file, subgroup_list_file, baseline_scale)
+    main(url_input_file, protein_input_file, color_file, 
+         subgroup_list_file, baseline_scale)

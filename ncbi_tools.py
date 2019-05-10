@@ -1,18 +1,23 @@
 """Tools for plasmidplots"""
 
 # Import libraries
-import os
-import pexpect
-import shutil
-import urllib
-from bs4 import BeautifulSoup
+# Built-in
 from itertools import islice
+import os
+import shutil
+
+# 3rd party
+from bs4 import BeautifulSoup
+import pexpect
+import urllib
+
 
 def url_input(input_file):
     """
     Takes urls and returns a list
 
-    The urls can be input directly, or in the form of a text file with each url on a separate line.
+    The urls can be input directly, or in the form of a text file 
+    with each url on a separate line.
     """
 
     url_list = []
@@ -56,26 +61,35 @@ def strain_name_scrape(url):
     gcf = gca_id.split('.')[0] + "." + asm_version
     gcf = gcf.replace("GCA", "GCF")
     assembly_url = "https://www.ncbi.nlm.nih.gov/assembly/" + gcf
-    print(assembly_url)
     asm_html = urllib.request.urlopen(assembly_url)
 
     # Parse html
     asm_soup = BeautifulSoup(asm_html, 'html.parser')
 
-    # Find strain ID
-    dlclass = asm_soup.find('dl', attrs={'class': 'assembly_summary_new margin_t0'})
+    # Find organism name
+    dlclass = asm_soup.find('dl', 
+                            attrs={'class':'assembly_summary_new margin_t0'})
+    organism = dlclass.find('dd').text
+    organism = organism.split('(')[0].strip()
+    
+    # Find strain IDs    
     dd = dlclass.find_all('dd')
-
-    # Search for strain ID in items
     for item in dd:
         line = item.text
         if "Strain:" in line:
             strain_text = line
             break
 
-    split_text = strain_text.split()
-    strain = split_text[1]
-    return strain
+    strain = strain_text.split()[1]
+    
+    # Remove strain name and any additional formatting from organism name
+    if strain in organism:
+        organism = organism.split(strain)[0].strip()
+    
+    # Add strain to organism name
+    name = organism + " " + strain
+    
+    return name
 
 
 def ncbi_scrape(url_list):
@@ -132,7 +146,8 @@ def ncbi_scrape(url_list):
                 ncbi_dict[name] = insdc
 
         if no_plasmids_found:
-            print("Warning: No plasmids found for strain " + strain + " (URL: " + url + ")")
+            print("Warning: No plasmids found for strain " 
+                  + strain + " (URL: " + url + ")")
 
     return ncbi_dict
 
@@ -156,7 +171,9 @@ def sequence_download(id_dict):
     # Loop over each plasmid
     for plasmid_name, sequence_id in id_dict.items():
         # Download sequence
-        command = 'bash -c ' + '"wget -q -O ' + temp1 + ' "https://www.ncbi.nlm.nih.gov/search/api/sequence/' + sequence_id + '?report=fasta"'
+        command = ('bash -c ' + '"wget -q -O ' + temp1 
+                    + ' "https://www.ncbi.nlm.nih.gov/search/api/sequence/' 
+                    + sequence_id + '?report=fasta"')
         pexpect.run(command)
 
         # Label with plasmid name

@@ -38,7 +38,7 @@ def strain_name_scrape(url):
     # Parse html
     soup = BeautifulSoup(html, 'html.parser')
 
-    # Find GCA
+    # Find GCA and gene assembly version
     table = soup.find('table', attrs={'class': 'summary'})
     a = table.find_all('a', attrs={'target': '_blank'})
     for item in a:
@@ -49,12 +49,15 @@ def strain_name_scrape(url):
 
     split_line = gca_line.split()
     gca_id = split_line[0]
+    asm_id = split_line[1]
 
     # Find strain given GCA ID
-    asm_cleaned = gca_id.split('.')[0] + ".1"
-    asm_id = asm_cleaned.replace("GCA", "GCF")
-    asm_url = "https://www.ncbi.nlm.nih.gov/assembly/" + asm_id
-    asm_html = urllib.request.urlopen(asm_url)
+    asm_version = asm_id.split('v')[1]
+    gcf = gca_id.split('.')[0] + "." + asm_version
+    gcf = gcf.replace("GCA", "GCF")
+    assembly_url = "https://www.ncbi.nlm.nih.gov/assembly/" + gcf
+    print(assembly_url)
+    asm_html = urllib.request.urlopen(assembly_url)
 
     # Parse html
     asm_soup = BeautifulSoup(asm_html, 'html.parser')

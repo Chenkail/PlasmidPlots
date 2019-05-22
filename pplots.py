@@ -17,7 +17,7 @@ import imagemergetools as imt
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
-import ncbi_tools as ncbi
+from plasmidplots import ncbi_tools as ncbi
 from plasmidplots import utilities as pputil
 
 

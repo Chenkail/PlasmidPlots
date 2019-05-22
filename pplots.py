@@ -13,17 +13,18 @@ from timeit import default_timer as timer
 # 3rd party
 from Bio import SeqIO
 from Bio.SeqUtils import GC, GC_skew
-from imagemergetools import imagemergetools as imt
+import imagemergetools as imt
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
-from plasmidplots import ncbi_tools as ncbi
+import ncbi_tools as ncbi
 from plasmidplots import utilities as pputil
 
 
 # -------- Authorship -------- #
 __author__ = "Chenkai Luo and Chris Lausted"
 __license__ = "GPLv3"
+__version__ = "1.6.0"
 
 # -------- Begin functions -------- #
 
@@ -529,7 +530,6 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
         else:
             baseline_color_scale = None
 
-
         if 'cp' in plasmid.split('_')[1]:
             # Plot
             circular_plot(plasmid, data, sequence_color_dict,
@@ -548,24 +548,35 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
 
     # Combine circular plot images
     circular_plots = imt.image_grid(circular_plot_list, circular_plot_columns)
-    circular_plot_file = plot_image_dir + strain + "_circular_plots.png"
-    circular_plots.save(circular_plot_file)
-    circular_plots.close()
+
+    if circular_plots == None:
+        print("No circular plasmids found for " + strain + ".")
+        circular_plot_file = None
+    else:
+        circular_plot_file = plot_image_dir + strain + "_circular_plots.png"
+        circular_plots.save(circular_plot_file)
+        circular_plots.close()
 
     # Combine linear plot images
     linear_plots = imt.image_grid(linear_plot_list, 1)
-    linear_plot_file = plot_image_dir + strain + "_linear_plots.png"
-    linear_plots.save(linear_plot_file)
-    linear_plots.close()
+
+    if linear_plots == None:
+        print("No linear plasmids found for " + strain + ".")
+        linear_plot_file = None
+    else:
+        linear_plot_file = plot_image_dir + strain + "_linear_plots.png"
+        linear_plots.save(linear_plot_file)
+        linear_plots.close()
 
     for image in (circular_plot_file, linear_plot_file):
-        imt.append_legend(image, legend, strain)
+        if image != None:
+            imt.append_legend(image, legend, strain)
 
-        if border:
-            # Add black border and then white buffer around it
-            imt.add_border(image)
-            imt.add_border(image, border_color='#FFFFFF',
-                           border_dimensions=(5, 5))
+            if border:
+                # Add black border and then white buffer around it
+                imt.add_border(image)
+                imt.add_border(image, border_color='#FFFFFF',
+                               border_dimensions=(5, 5))
 
     # Return image file names
     return circular_plot_file, linear_plot_file
@@ -710,8 +721,10 @@ def main(url_input_file, protein_input, color_file,
                                         legend=legend_image_file)
         print("Strain plotted: " + strain)
 
-        image_list.append(circular)
-        image_list.append(linear)
+        if circular != None:
+            image_list.append(circular)
+        if linear != None:
+            image_list.append(linear)
 
     imt.images_to_pdf(image_list, 'plots.pdf')
     print("PDF generated.")

@@ -13,7 +13,7 @@ from timeit import default_timer as timer
 # 3rd party
 from Bio import SeqIO
 from Bio.SeqUtils import GC, GC_skew
-import imagemergetools as imt
+from imagemergetools import imagemergetools as imt
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np

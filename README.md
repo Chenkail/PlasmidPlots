@@ -11,11 +11,16 @@ This program generates similar plots for any strain of any bacteria and any prot
 ## Installing
 
 ### Prerequisites
+
+#### Python
  - Python 3
  - [imagemergetools](https://github.com/Chenkail/imagemergetools)
  - matplotlib
  - Biopython
  - PIL
+
+#### Other
+ - Firefox
 
 ### Pip
 ```

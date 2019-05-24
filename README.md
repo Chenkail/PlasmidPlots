@@ -16,6 +16,7 @@ This program generates similar plots for any strain of any bacteria and any prot
  - Python 3
  - [imagemergetools](https://github.com/Chenkail/imagemergetools)
  - matplotlib
+ - pyvirtualdisplay
  - Biopython
  - PIL
 

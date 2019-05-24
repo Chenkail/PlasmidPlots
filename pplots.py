@@ -461,6 +461,7 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
 
     circular_plot_list = []
     linear_plot_list = []
+    uncategorized_plot_list = []
     temp_file = "./plasmidplots_temp/temp.png"
     plot_image_dir = "./plasmidplots_temp/plot_images/"
 
@@ -538,13 +539,21 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
             image.load()
             circular_plot_list.append(image)
 
-        else:
+        elif 'lp' in plasmid.split('_')[1]:
             # Plot
             linear_plot(plasmid, data, sequence_color_dict,
                         baseline_custom_colors=baseline_color_scale)
             image = Image.open(temp_file)
             image.load()
             linear_plot_list.append(image)
+            
+        else:
+            # Plot
+            linear_plot(plasmid, data, sequence_color_dict,
+                        baseline_custom_colors=baseline_color_scale)
+            image = Image.open(temp_file)
+            image.load()
+            uncategorized_plot_list.append(image)
 
     # Combine circular plot images
     circular_plots = imt.image_grid(circular_plot_list, circular_plot_columns)
@@ -567,10 +576,32 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
         linear_plot_file = plot_image_dir + strain + "_linear_plots.png"
         linear_plots.save(linear_plot_file)
         linear_plots.close()
-
-    for image in (circular_plot_file, linear_plot_file):
+    
+    # Combine other plot images
+    uncategorized_plots = imt.image_grid(uncategorized_plot_list, 1)
+    
+    if uncategorized_plots == None:
+        uncategorized_plot_file = None
+    else:
+        print("Uncategorized plasmids found for " + strain + ".")
+        uncategorized_plot_file = plot_image_dir + strain + "_uncategorized_plots.png"
+        uncategorized_plots.save(uncategorized_plot_file)
+        uncategorized_plots.close()    
+    
+    image_file_list = (circular_plot_file, linear_plot_file, uncategorized_plot_file)
+    
+    for image in image_file_list:
+        strain_title = strain
+        
+        if image == circular_plot_file:
+            strain_title += " (Circular)"
+        elif image == linear_plot_file:
+            strain_title += " (Linear)"
+        else:
+            strain_title += " (Uncategorized)"
+        
         if image != None:
-            imt.append_legend(image, legend, strain)
+            imt.append_legend(image, legend, strain_title)
 
             if border:
                 # Add black border and then white buffer around it
@@ -579,7 +610,7 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
                                border_dimensions=(5, 5))
 
     # Return image file names
-    return circular_plot_file, linear_plot_file
+    return circular_plot_file, linear_plot_file, uncategorized_plot_file
 
 
 def strain_sort(data_dict):

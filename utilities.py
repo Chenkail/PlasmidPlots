@@ -1,8 +1,11 @@
 """Miscellaneous utilities"""
 
 # -------- Import libraries -------- #
-import pexpect
+# Built-in
 from itertools import islice
+
+# 3rd party
+import pexpect
 
 def grayscale(decimal, darkest=0, lightest=255, reverse=False, lower=0, upper=1):
     """

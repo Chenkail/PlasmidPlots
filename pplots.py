@@ -17,7 +17,8 @@ from imagemergetools import imagemergetools as imt
 from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
-from plasmidplots import ncbi_tools as ncbi
+# from plasmidplots import ncbi_tools as ncbi
+import ncbi_tools as ncbi
 from plasmidplots import utilities as pputil
 
 
@@ -546,7 +547,7 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
             image = Image.open(temp_file)
             image.load()
             linear_plot_list.append(image)
-            
+
         else:
             # Plot
             linear_plot(plasmid, data, sequence_color_dict,
@@ -576,30 +577,30 @@ def dict_to_plot(strain, data_dict, sequence_color_dict,
         linear_plot_file = plot_image_dir + strain + "_linear_plots.png"
         linear_plots.save(linear_plot_file)
         linear_plots.close()
-    
+
     # Combine other plot images
     uncategorized_plots = imt.image_grid(uncategorized_plot_list, 1)
-    
+
     if uncategorized_plots == None:
         uncategorized_plot_file = None
     else:
         print("Uncategorized plasmids found for " + strain + ".")
         uncategorized_plot_file = plot_image_dir + strain + "_uncategorized_plots.png"
         uncategorized_plots.save(uncategorized_plot_file)
-        uncategorized_plots.close()    
-    
+        uncategorized_plots.close()
+
     image_file_list = (circular_plot_file, linear_plot_file, uncategorized_plot_file)
-    
+
     for image in image_file_list:
         strain_title = strain
-        
+
         if image == circular_plot_file:
             strain_title += " (Circular)"
         elif image == linear_plot_file:
             strain_title += " (Linear)"
         else:
             strain_title += " (Uncategorized)"
-        
+
         if image != None:
             imt.append_legend(image, legend, strain_title)
 
@@ -745,7 +746,7 @@ def main(url_input_file, protein_input, color_file,
 
     image_list = []
     for strain, data in sorted_dict.items():
-        circular, linear = dict_to_plot(strain, data, sequence_color_dict,
+        circular, linear, uncategorized = dict_to_plot(strain, data, sequence_color_dict,
                                         5, border=True,
                                         baseline_colors=baseline_scale,
                                         dna_file=dna_sequence_file,
@@ -756,6 +757,8 @@ def main(url_input_file, protein_input, color_file,
             image_list.append(circular)
         if linear != None:
             image_list.append(linear)
+        if uncategorized != None:
+            image_list.append(uncategorized)
 
     imt.images_to_pdf(image_list, 'plots.pdf')
     print("PDF generated.")

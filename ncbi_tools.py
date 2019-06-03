@@ -127,6 +127,7 @@ def url_input(input_file):
         url_count += 1
 
     print("URL count: " + str(url_count))
+
     return url_list
 
 
@@ -136,7 +137,7 @@ def strain_name_scrape(url):
     """
 
     # Get html
-    html = urllib.request.urlopen(url)
+    html = get_dynamic_content(url)
 
     # Parse html
     soup = BeautifulSoup(html, 'html.parser')
@@ -152,21 +153,44 @@ def strain_name_scrape(url):
 
     split_line = gca_line.split()
     gca_id = split_line[0]
-    asm_id = split_line[1]
+
+    # Catch missing assembly error
+    try:
+        asm_id = split_line[1]
+        asm_version = asm_id.split('v')[1]
+
+    except IndexError:
+        asm_version = "1"
 
     # Find strain given GCA ID
-    asm_version = asm_id.split('v')[1]
-    gcf = gca_id.split('.')[0] + "." + asm_version
-    gcf = gcf.replace("GCA", "GCF")
+    gca = gca_id.split('.')[0] + "." + asm_version
+    gcf = gca.replace("GCA", "GCF")
+
+
     assembly_url = "https://www.ncbi.nlm.nih.gov/assembly/" + gcf
-    asm_html = urllib.request.urlopen(assembly_url)
+    asm_html = get_dynamic_content(assembly_url)
 
     # Parse html
     asm_soup = BeautifulSoup(asm_html, 'html.parser')
 
+    # Test for 404 page
+    not_found = asm_soup.find('meta', attrs={'content':'not_found'})
+
+    if not_found != None:
+        assembly_url = "https://www.ncbi.nlm.nih.gov/assembly/" + gca
+        asm_html = get_dynamic_content(assembly_url)
+        # Parse html
+        asm_soup = BeautifulSoup(asm_html, 'html.parser')
+
     # Find organism name
     dlclass = asm_soup.find('dl',
                             attrs={'class':'assembly_summary_new margin_t0'})
+
+    # DEBUG
+    if dlclass == None:
+        print("URL: " + url)
+        print("Assembly: " + assembly_url)
+
     organism = dlclass.find('dd').text
     organism = organism.split('(')[0].strip()
 
@@ -196,11 +220,9 @@ def ncbi_scrape(url_list):
     """
     Scrapes tables for lists of IDs and names given urls for each strain
 
-    Takes input in the form of a list of NCBI links, e.g.
+    Takes input in the form of a text file containing NCBI links, e.g.
     https://www.ncbi.nlm.nih.gov/genome/738?genome_assembly_id=335284
     https://www.ncbi.nlm.nih.gov/genome/738?genome_assembly_id=300340
-
-    Enter a blank line to stop input.
     """
 
     # Loop over each url in the list and add data to dictionary

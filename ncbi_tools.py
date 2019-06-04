@@ -131,7 +131,7 @@ def url_input(input_file):
     return url_list
 
 
-def strain_name_scrape(url):
+def strain_name_scrape(url, timeout = 5):
     """
     Scrapes NCBI for name of a strain given its url
     """
@@ -182,14 +182,33 @@ def strain_name_scrape(url):
         # Parse html
         asm_soup = BeautifulSoup(asm_html, 'html.parser')
 
-    # Find organism name
-    dlclass = asm_soup.find('dl',
+    # Loop until found or
+    dlclass = None
+    loop_count = 0
+    while dlclass == None:
+        if loop_count > 1:
+            print("Could not find name of strain, retrying. Attempts: " + str(loop_count))
+
+        asm_html = get_dynamic_content(assembly_url)
+        # Parse html
+        asm_soup = BeautifulSoup(asm_html, 'html.parser')
+        # Find organism name
+        dlclass = asm_soup.find('dl',
                             attrs={'class':'assembly_summary_new margin_t0'})
 
-    # DEBUG
-    if dlclass == None:
-        print("URL: " + url)
-        print("Assembly: " + assembly_url)
+
+        # DEBUG
+        if loop_count == 1:
+            print("URL: " + url)
+            print("Assembly: " + assembly_url)
+
+        # Break if timeout reached
+        if loop_count == timeout:
+            print("Error: Timeout reached")
+            return "NAME NOT FOUND"
+
+        loop_count += 1
+
 
     organism = dlclass.find('dd').text
     organism = organism.split('(')[0].strip()
@@ -207,6 +226,8 @@ def strain_name_scrape(url):
     # Remove strain name and any additional formatting from organism name
     if strain in organism:
         organism = organism.split(strain)[0].strip()
+    if ' strain ' in organism:
+        organism = organism.replace(' strain ', ' ').strip()
 
     organism = organism.replace(' ', '-')
 

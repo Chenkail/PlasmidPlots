@@ -1,4 +1,4 @@
-![](https://img.shields.io/github/release-pre/chenkail/plasmidplots.svg)
+![](https://img.shields.io/github/release/chenkail/plasmidplots.svg)
 ![](https://img.shields.io/github/license/Chenkail/plasmidplots.svg)
 # PlasmidPlots
 
